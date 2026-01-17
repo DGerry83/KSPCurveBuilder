@@ -1,0 +1,171 @@
+﻿/* 
+ * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
+ * Logic from that project is used here and throughout
+ * Modified and restructured by Karl Kreegland in 2026.
+ * Licensed under the GNU General Public License v2.0.
+ */
+
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace KSPCurveBuilder
+{
+    /// <summary>
+    /// Handles rendering the curve visualization to a Graphics surface.
+    /// </summary>
+    public class CurveRenderer
+    {
+        private readonly Graphics _g;
+        private readonly List<FloatString4> _points;
+        private readonly FloatCurveStandalone _curve;
+        private readonly float _minTime, _maxTime, _minValue, _maxValue;
+        private readonly int _width, _height;
+        private readonly float _zoomLevel;
+        private readonly Font _gridFont;
+        private readonly Font _titleFont;
+        private readonly Pen _curvePen;
+        private readonly Pen _gridPen;
+        private readonly Pen _pointPen;
+        private readonly Brush _pointBrush;
+        private const int GRID_LINES = 10;
+
+        public CurveRenderer(Graphics g, List<FloatString4> points, FloatCurveStandalone curve,
+            float minTime, float maxTime, float minValue, float maxValue,
+            int width, int height, float zoomLevel)
+        {
+            _g = g;
+            _points = points;
+            _curve = curve;
+            _minTime = minTime;
+            _maxTime = maxTime;
+            _minValue = minValue;
+            _maxValue = maxValue;
+            _width = width;
+            _height = height;
+            _zoomLevel = zoomLevel;
+            _gridFont = new Font("Arial", 8);
+            _titleFont = new Font("Arial", 10, FontStyle.Bold);
+            _curvePen = new Pen(Color.LimeGreen, 2f);
+            _gridPen = new Pen(Color.FromArgb(60, 60, 60), 1f);
+            _pointPen = new Pen(Color.White, 2f);
+            _pointBrush = Brushes.White;
+        }
+        /// <summary>Draws grid, curve line, points, and labels to the graphics surface.</summary>
+        public void Render()
+        {
+            if (_points.Count == 0) return;
+
+            DrawGrid();
+            DrawCurve();
+            DrawPoints();
+            DrawLabels();
+        }
+
+        private void DrawGrid()
+        {
+            float timeRange = _maxTime - _minTime;
+            float valueRange = _maxValue - _minValue;
+
+            if (timeRange <= 0 || valueRange <= 0) return;
+
+            float timeStep = CalculateNiceStep(timeRange / GRID_LINES);
+            float valueStep = CalculateNiceStep(valueRange / GRID_LINES);
+
+            float firstTime = (float)Math.Ceiling(_minTime / timeStep) * timeStep;
+            float firstValue = (float)Math.Ceiling(_minValue / valueStep) * valueStep;
+
+            for (float time = firstTime; time <= _maxTime; time += timeStep)
+            {
+                float x = (time - _minTime) * _width / timeRange;
+                if (x >= -50 && x <= _width + 50)
+                {
+                    _g.DrawLine(_gridPen, x, 0, x, _height);
+                    _g.DrawString(time.ToString("F1", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, x, _height - 15);
+                }
+            }
+
+            for (float value = firstValue; value <= _maxValue; value += valueStep)
+            {
+                float y = _height - ((value - _minValue) * _height / valueRange);
+                if (y >= -50 && y <= _height + 50)
+                {
+                    _g.DrawLine(_gridPen, 0, y, _width, y);
+                    _g.DrawString(value.ToString("F2", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, 5, y);
+                }
+            }
+        }
+
+        private void DrawCurve()
+        {
+            if (_curve == null || _curve.Curve.keys.Length < 2) return;
+
+            List<PointF> curvePoints = new List<PointF>();
+            int samples = Math.Min(_width, Constants.MAX_SAMPLES);
+
+            for (int i = 0; i <= samples; i++)
+            {
+                float time = _minTime + (i * (_maxTime - _minTime) / samples);
+                float value = _curve.Evaluate(time);
+
+                float x = (time - _minTime) * _width / (_maxTime - _minTime);
+                float y = _height - ((value - _minValue) * _height / (_maxValue - _minValue));
+
+                curvePoints.Add(new PointF(x, y));
+            }
+
+            if (curvePoints.Count >= 2)
+            {
+                _g.DrawCurve(_curvePen, curvePoints.ToArray());
+            }
+        }
+
+        private void DrawPoints()
+        {
+            foreach (var point in _points)
+            {
+                float x = (point.Time - _minTime) * _width / (_maxTime - _minTime);
+                float y = _height - ((point.Value - _minValue) * _height / (_maxValue - _minValue));
+
+                _g.FillEllipse(_pointBrush, x - 4, y - 4, 8, 8);
+                _g.DrawEllipse(_pointPen, x - 4, y - 4, 8, 8);
+            }
+        }
+
+        private void DrawLabels()
+        {
+            string title = $"Curve Editor - {_points.Count} point(s)";
+            //string range = $"Time: [{_minTime:F1}, {_maxTime:F1}]  Value: [{_minValue:F2}, {_maxValue:F2}]";
+
+            SizeF titleSize = _g.MeasureString(title, _titleFont);
+            //SizeF rangeSize = _g.MeasureString(range, _gridFont);
+            float boxWidth = titleSize.Width + 5;
+            float boxHeight = titleSize.Height + 10;
+
+            _g.FillRectangle(Brushes.Black, 35, 5, boxWidth, boxHeight);
+            _g.DrawString(title, _titleFont, Brushes.White, 40, 10);
+            //_g.DrawString(range, _gridFont, Brushes.White, 10, 30);
+
+            string zoomText = $"Zoom: {_zoomLevel:F1}x";
+            SizeF textSize = _g.MeasureString(zoomText, _gridFont);
+            float labelX = _width - textSize.Width - 10;
+            float labelY = _height - textSize.Height - 30;
+            _g.DrawString(zoomText, _gridFont, Brushes.White, labelX, labelY);
+        }
+
+        private float CalculateNiceStep(float rawStep)
+        {
+            if (rawStep <= 0) return 1f;
+            float exponent = (float)Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
+            float normalized = rawStep / exponent;
+
+            if (normalized <= 1) return 1f * exponent;
+            if (normalized <= 2) return 2f * exponent;
+            if (normalized <= 5) return 5f * exponent;
+            return 10f * exponent;
+        }
+    }
+}
