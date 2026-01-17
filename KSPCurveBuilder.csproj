@@ -49,24 +49,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuiltInPresets.cs" />
-    <Compile Include="Constants.cs" />
-    <Compile Include="CurveRenderer.cs" />
-    <Compile Include="CurveValidator.cs" />
-    <Compile Include="FloatString4.cs" />
-    <Compile Include="FloatCurveStandalone.cs" />
-    <Compile Include="MyAnimationCurve.cs" />
-    <Compile Include="KSPCurveBuilder.cs">
+    <Compile Include="SOURCE\BuiltInPresets.cs" />
+    <Compile Include="SOURCE\Constants.cs" />
+    <Compile Include="SOURCE\CurveRenderer.cs" />
+    <Compile Include="SOURCE\CurveValidator.cs" />
+    <Compile Include="SOURCE\FloatString4.cs" />
+    <Compile Include="SOURCE\FloatCurveStandalone.cs" />
+    <Compile Include="SOURCE\MyAnimationCurve.cs" />
+    <Compile Include="SOURCE\KSPCurveBuilder.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="KSPCurveBuilder.Designer.cs">
+    <Compile Include="SOURCE\KSPCurveBuilder.Designer.cs">
       <DependentUpon>KSPCurveBuilder.cs</DependentUpon>
     </Compile>
-    <Compile Include="Preset.cs" />
-    <Compile Include="PresetManager.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="SOURCE\Preset.cs" />
+    <Compile Include="SOURCE\PresetManager.cs" />
+    <Compile Include="SOURCE\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="KSPCurveBuilder.resx">
+    <EmbeddedResource Include="SOURCE\KSPCurveBuilder.resx">
       <DependentUpon>KSPCurveBuilder.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
