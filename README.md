@@ -1,5 +1,6 @@
 # KSPCurveBuilder
 A standalone Windows desktop application for editing and visualizing float curves, with support for saving and loading custom presets.
+
 Based on Amazing Curve Editor by sarbian (c)2015 (https://github.com/sarbian)
 
 ## Features
