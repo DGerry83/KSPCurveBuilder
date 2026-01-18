@@ -35,7 +35,6 @@ namespace KSPCurveBuilder
         public event EventHandler? PointsChanged;
         public event EventHandler? SilentPointsChanged; // For drag operations only
 
-        public event EventHandler? GraphBoundsChanged;
 
         public CurveEditorService(List<FloatString4> points, BindingList<FloatString4> bindingList)
         {

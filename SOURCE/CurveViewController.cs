@@ -4,17 +4,16 @@
  * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
  * Logic from that original project is used here and throughout.
  * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian ).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/ ).
+ * Original work copyright © 2015 Sarbian (https://github.com/sarbian  ).
+ * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/  ).
  * 
  * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
+ * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
  */
 
 #nullable enable
 
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -26,6 +25,7 @@ namespace KSPCurveBuilder
         private readonly PictureBox _pictureBox;
         private readonly CurveEditorService _editorService;
         private readonly Func<FloatCurveStandalone?> _getCurve;
+        private readonly CurveRenderer _renderer;
 
         public float ZoomLevel { get; set; } = 1.0f;
         public PointF PanCenter { get; set; } = new(0.5f, 0.5f);
@@ -39,12 +39,7 @@ namespace KSPCurveBuilder
         private int _hoveredPointIndex = -1;
         private Point _panDragStart = Point.Empty;
         private bool _isPanning = false;
-
-        // Track the original point for efficient updates
         private FloatString4? _originalPoint = null;
-
-        // CRITICAL: Don't fire events during drag
-        private bool _suppressEventsDuringDrag = true;
 
         public event EventHandler? DragStarted;
         public event EventHandler? DragEnded;
@@ -56,6 +51,7 @@ namespace KSPCurveBuilder
             _pictureBox = pictureBox ?? throw new ArgumentNullException(nameof(pictureBox));
             _editorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
             _getCurve = getCurve ?? throw new ArgumentNullException(nameof(getCurve));
+            _renderer = new CurveRenderer();
 
             _pictureBox.Paint += OnPaint;
             _pictureBox.MouseWheel += OnMouseWheel;
@@ -63,7 +59,10 @@ namespace KSPCurveBuilder
             _pictureBox.MouseMove += OnMouseMove;
             _pictureBox.MouseUp += OnMouseUp;
             _pictureBox.MouseClick += OnMouseClick;
-            _pictureBox.Resize += (s, e) => _pictureBox.Invalidate();
+            _pictureBox.Resize += OnResize;
+
+            // Clean up renderer when PictureBox is disposed
+            _pictureBox.Disposed += (s, e) => _renderer.Dispose();
         }
 
         private void OnPaint(object? sender, PaintEventArgs e)
@@ -75,7 +74,7 @@ namespace KSPCurveBuilder
 
             if (points.Count == 0)
             {
-                UpdateGraphBounds(); // Ensure bounds are valid even when empty
+                UpdateGraphBounds();
                 e.Graphics.Clear(Color.Black);
                 return;
             }
@@ -85,12 +84,18 @@ namespace KSPCurveBuilder
 
             UpdateGraphBounds();
 
-            using (var renderer = new CurveRenderer(e.Graphics, points.ToList(), curve,
+            // Update renderer state then render
+            _renderer.UpdateState(points.ToList(), curve,
                 GraphMinTime, GraphMaxTime, GraphMinValue, GraphMaxValue,
-                _pictureBox.Width, _pictureBox.Height, ZoomLevel, _draggedPointIndex, _hoveredPointIndex))
-            {
-                renderer.Render();
-            }
+                _pictureBox.Width, _pictureBox.Height, ZoomLevel,
+                _draggedPointIndex, _hoveredPointIndex);
+
+            _renderer.Render(e.Graphics);
+        }
+
+        private void OnResize(object? sender, EventArgs e)
+        {
+            _pictureBox?.Invalidate();
         }
 
         private float CalculateOptimalZoom(float minTime, float maxTime, float minValue, float maxValue)
@@ -131,13 +136,26 @@ namespace KSPCurveBuilder
         {
             var (minTime, maxTime, minValue, maxValue) = CalculateDataRange();
 
-            float timePadding = (maxTime - minTime) * 0.1f;
-            float valuePadding = (maxValue - minValue) * 0.1f;
+            // Ensure non-zero ranges to prevent division by zero in renderer
+            if (maxTime - minTime < Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO)
+            {
+                minTime -= Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO / 2f;
+                maxTime += Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO / 2f;
+            }
+            if (maxValue - minValue < Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO)
+            {
+                minValue -= Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO / 2f;
+                maxValue += Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO / 2f;
+            }
 
+            // Clamp PanCenter to valid range (prevents corruption from extreme values)
             PanCenter = new PointF(
                 Math.Max(0.01f, Math.Min(0.99f, PanCenter.X)),
                 Math.Max(0.01f, Math.Min(0.99f, PanCenter.Y))
             );
+
+            float timePadding = (maxTime - minTime) * 0.1f;
+            float valuePadding = (maxValue - minValue) * 0.1f;
 
             float dataWidth = (maxTime - minTime + 2 * timePadding) / ZoomLevel;
             float dataHeight = (maxValue - minValue + 2 * valuePadding) / ZoomLevel;
@@ -149,6 +167,16 @@ namespace KSPCurveBuilder
             GraphMaxTime = centerX + dataWidth / 2;
             GraphMinValue = centerY - dataHeight / 2;
             GraphMaxValue = centerY + dataHeight / 2;
+
+            // FINAL GUARD: Use the Visual constant
+            if (Math.Abs(GraphMaxTime - GraphMinTime) < Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO)
+            {
+                GraphMaxTime = GraphMinTime + Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO;
+            }
+            if (Math.Abs(GraphMaxValue - GraphMinValue) < Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO)
+            {
+                GraphMaxValue = GraphMinValue + Constants.Visual.MIN_RANGE_BEFORE_DIVIDE_BY_ZERO;
+            }
         }
 
         private void OnMouseWheel(object? sender, MouseEventArgs e)

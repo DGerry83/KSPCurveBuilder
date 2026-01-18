@@ -29,6 +29,14 @@ namespace KSPCurveBuilder
         public const int HOVER_LABEL_OFFSET_Y = -20;
         public const int DRAG_EDGE_THRESHOLD = 5;  // Pixels from screen edge to trigger wrap
         public const int DRAG_WARP_DISTANCE = 50;   // Distance to warp cursor back
+
+        public static class Visual
+        {
+            // GDI+ coordinate overflow prevention limit (DO NOT increase)
+            public const float MAX_RENDER_COORDINATE = 1e6f;
+            public const float MIN_RENDER_COORDINATE = -1e6f;
+            public const float MIN_RANGE_BEFORE_DIVIDE_BY_ZERO = 0.001f;
+        }
     }
     public static class Formatting
     {
@@ -36,6 +44,7 @@ namespace KSPCurveBuilder
         public const string VALUE_DECIMAL_PLACES = "F1";
         public const string TANGENT_SIGNIFICANT_FIGURES = "G4";
     }
+
 
     public enum DataGridColumn
     {

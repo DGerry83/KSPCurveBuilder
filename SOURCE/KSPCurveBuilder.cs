@@ -37,7 +37,7 @@ namespace KSPCurveBuilder
         private bool _suppressUndoRecording = false;
 
         // RESTORED: Track pending drag operations for deferred undo recording
-        private bool _isInDragOperation = false;
+        //private bool _isInDragOperation = false;
         private string _preDragState = "";
 
         public KSPCurveBuilder()
@@ -109,13 +109,11 @@ namespace KSPCurveBuilder
 
         private void OnDragStarted(object? sender, EventArgs e)
         {
-            _isInDragOperation = true;
             _preDragState = _editorService.SerializeToText();
         }
 
         private void OnDragEnded(object? sender, EventArgs e)
         {
-            _isInDragOperation = false;
 
             _bindingList.ResetBindings();
 
