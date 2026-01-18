@@ -62,11 +62,20 @@ namespace KSPCurveBuilder
         private PointF panCenter = new PointF(0.5f, 0.5f); // 0.5 = centered
         private Point panDragStart = Point.Empty;
         private bool isPanning = false;
+        private bool isDraggingPoint = false;
+        private int draggedPointIndex = -1;
+        private PointF dragStartGraphPos;
+        private int hoveredPointIndex = -1;
 
         /// <summary>Initializes the form and sets up all controls.</summary>
         public KSPCurveBuilder()
         {
             InitializeComponent();
+            typeof(PictureBox).InvokeMember("DoubleBuffered",
+                System.Reflection.BindingFlags.SetProperty |
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic,
+                null, curveView, new object[] { true });
             this.FormBorderStyle = FormBorderStyle.FixedSingle; // or FixedDialog
             this.MaximizeBox = false;
             this.Icon = global::KSPCurveBuilder.Properties.Resources.CurveIcon;
@@ -193,6 +202,7 @@ namespace KSPCurveBuilder
             curveView.MouseMove += CurveView_MouseMove;
             curveView.MouseUp += CurveView_MouseUp;
             curveView.TabStop = true;
+            curveView.MouseClick += CurveView_MouseClick;
             //curveView.MouseEnter += (s, e) => curveView.Focus(); // Required for wheel events
 
             // Preset element events
@@ -626,13 +636,37 @@ namespace KSPCurveBuilder
 
             var renderer = new CurveRenderer(e.Graphics, points, curve,
                 graphMinTime, graphMaxTime, graphMinValue, graphMaxValue,
-                curveView.Width, curveView.Height, zoomLevel);
+                curveView.Width, curveView.Height, zoomLevel, draggedPointIndex, hoveredPointIndex);
             renderer.Render();
         }
 
         private void CurveView_Resize(object sender, EventArgs e)
         {
             curveView.Invalidate(); // Redraw on resize
+        }
+        /// <summary>
+        /// Handles right-click on the curve view to add a new keyframe at the clicked (time, value) position.
+        /// The new point is added with zero tangents and the UI is updated immediately.
+        /// </summary>
+        private void CurveView_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Right) return;
+
+            // Convert screen coordinates to graph coordinates
+            float time = graphMinTime + (e.X / (float)curveView.Width) * (graphMaxTime - graphMinTime);
+            float value = graphMaxValue - (e.Y / (float)curveView.Height) * (graphMaxValue - graphMinValue);
+
+            // Create and add new point with zero tangents
+            var newPoint = new FloatString4(time, value, 0f, 0f);
+            points.Add(newPoint);
+
+            // Sort if enabled
+            if (checkBoxSort.Checked)
+                points.Sort();
+
+            // Update UI
+            pointsBindingList.ResetBindings();
+            UpdateAll();
         }
 
         #endregion
@@ -736,7 +770,7 @@ namespace KSPCurveBuilder
 
         #region Utility Methods
 
-        //Mouse interaction for dragging on cells to change values
+        // Mouse interaction for dragging on cells to change values
         #region MouseDragControls
         private void DataPointEditor_MouseDown(object sender, MouseEventArgs e)
         {
@@ -766,7 +800,12 @@ namespace KSPCurveBuilder
                 dataPointEditor.Cursor = Cursors.HSplit;
             }
         }
-
+        /// <summary>
+        /// Handles mouse drag operations to adjust curve point values in real-time.
+        /// Dragging vertically modifies the value based on mouse movement delta and current drag rate.
+        /// Holding Shift increases drag speed 5x; holding Ctrl reduces speed to 0.1x for fine-tuning.
+        /// Updates the affected cell and curve visualization during drag for immediate feedback.
+        /// </summary>
         private void DataPointEditor_MouseMove(object sender, MouseEventArgs e)
         {
             if (!isDragging || dragRowIndex < 0) return;
@@ -791,7 +830,11 @@ namespace KSPCurveBuilder
             float columnMult = (dragColumnIndex == (int)DataGridColumn.InTangent ||
                                 dragColumnIndex == (int)DataGridColumn.OutTangent) ?
                                 Constants.TANGENT_MULTIPLIER : 1.0f;
-            float rawChange = mouseDelta * Constants.DRAG_SENSITIVITY * columnMult;
+
+            // Apply modifier key speed adjustments
+            float speedMultiplier = GetDragSpeedMultiplier();
+            float rawChange = mouseDelta * Constants.DRAG_SENSITIVITY * columnMult * speedMultiplier;
+
             float currentRate = getDragRate(Math.Abs(currentValue));
             float valueChange = rawChange * currentRate;
             float newValue = currentValue + valueChange;
@@ -883,6 +926,18 @@ namespace KSPCurveBuilder
                     return value;
             }
         }
+        /// <summary>
+        /// Gets the drag speed multiplier based on modifier keys.
+        /// Shift = 5x speed, Ctrl = 0.1x speed (fine-tune), none = 1x speed.
+        /// </summary>
+        private float GetDragSpeedMultiplier()
+        {
+            if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
+                return 5.0f;
+            if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
+                return 0.1f;
+            return 1.0f;
+        }
         #endregion
 
         // Zoom/pan controls for graph
@@ -914,20 +969,76 @@ namespace KSPCurveBuilder
             }
         }
 
+        /// <summary>
+        /// Handles mouse down on curve view. Left-click on point starts point drag;
+        /// left-click on empty space starts pan; right-click adds point.
+        /// </summary>
         private void CurveView_MouseDown(object sender, MouseEventArgs e)
         {
             curveView.Focus();
+
             if (e.Button == MouseButtons.Left)
             {
-                isPanning = true;
-                panDragStart = e.Location;
-                curveView.Cursor = Cursors.SizeAll;
+                int hitIndex = HitTestPoint(e.Location);
+                if (hitIndex >= 0 && !isPanning)
+                {
+                    isDraggingPoint = true;
+                    draggedPointIndex = hitIndex;
+                    hoveredPointIndex = hitIndex;
+                    curveView.Cursor = Cursors.Hand;
+                    // Lock cursor to PictureBox bounds
+                    Cursor.Clip = curveView.RectangleToScreen(curveView.ClientRectangle);
+                    return;
+                }
+
+                if (!isDraggingPoint)
+                {
+                    isPanning = true;
+                    panDragStart = e.Location;
+                    curveView.Cursor = Cursors.SizeAll;
+                }
+            }
+
+            if (e.Button == MouseButtons.Left && HitTestPoint(e.Location) < 0)
+            {
+                hoveredPointIndex = -1;
             }
         }
 
+        /// <summary>
+        /// Handles mouse move for point dragging, panning, and hover label display.
+        /// Updates hover state and triggers redraw for label visibility.
+        /// </summary>
         private void CurveView_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isPanning)
+            if (isDraggingPoint && draggedPointIndex >= 0)
+            {
+                // Convert mouse position to graph coordinates
+                float newTime = graphMinTime + (e.X / (float)curveView.Width) * (graphMaxTime - graphMinTime);
+                float newValue = graphMaxValue - (e.Y / (float)curveView.Height) * (graphMaxValue - graphMinValue);
+
+                // Clamp to prevent ArgumentOutOfRangeException
+                newTime = Math.Max(0f, Math.Min(newTime, Constants.MAX_REASONABLE_VALUE));
+                newValue = Math.Max(-Constants.MAX_REASONABLE_VALUE, Math.Min(newValue, Constants.MAX_REASONABLE_VALUE));
+
+                // Update the point directly
+                var point = points[draggedPointIndex];
+                point.Time = newTime;
+                point.Value = newValue;
+
+                // Sort if needed
+                if (checkBoxSort.Checked)
+                {
+                    points.Sort();
+                    draggedPointIndex = points.IndexOf(point);
+                    hoveredPointIndex = draggedPointIndex;
+                }
+
+                // Skip UpdateGraphBounds during drag - keep view static!
+                // Just refresh for smooth visual feedback
+                curveView.Refresh();
+            }
+            else if (isPanning)
             {
                 float timePerPixel = (graphMaxTime - graphMinTime) / curveView.Width;
                 float valuePerPixel = (graphMaxValue - graphMinValue) / curveView.Height;
@@ -940,18 +1051,79 @@ namespace KSPCurveBuilder
 
                 panDragStart = e.Location;
                 UpdateGraphBounds();
-                curveView.Invalidate();
+                curveView.Refresh();
+            }
+            else
+            {
+                // Update hover state for label display
+                int newHoveredIndex = HitTestPoint(e.Location);
+
+                if (newHoveredIndex != hoveredPointIndex)
+                {
+                    hoveredPointIndex = newHoveredIndex;
+                    curveView.Invalidate(); // Only invalidate if hover state changed
+                }
+
+                curveView.Cursor = (hoveredPointIndex >= 0) ? Cursors.Hand : Cursors.Cross;
             }
         }
 
 
+        /// <summary>
+        /// Ends point dragging or panning when mouse button is released.
+        /// Performs full UI sync to ensure all controls are consistent.
+        /// </summary>
         private void CurveView_MouseUp(object sender, MouseEventArgs e)
         {
-            isPanning = false;
-            curveView.Cursor = Cursors.Cross;
+            if (isDraggingPoint)
+            {
+                isDraggingPoint = false;
+                draggedPointIndex = -1;
+                curveView.Cursor = Cursors.Cross;
+                hoveredPointIndex = -1;
+                // Release cursor lock
+                Cursor.Clip = Rectangle.Empty;
+
+                // Now recalculate bounds and sync UI
+                pointsBindingList.ResetBindings();
+                UpdateAll();
+            }
+            else if (isPanning)
+            {
+                isPanning = false;
+                curveView.Cursor = Cursors.Cross;
+            }
         }
         #endregion
+
+        // Click/drag controls for points on PictureBox view
+        #region ClickDragPointControl
+
+        /// <summary>
+        /// Tests if mouse position is over a curve point (within 8px radius).
+        /// Returns the point index or -1 if no hit.
+        /// </summary>
+        private int HitTestPoint(Point mousePos)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                float x = (points[i].Time - graphMinTime) * curveView.Width / (graphMaxTime - graphMinTime);
+                float y = curveView.Height - ((points[i].Value - graphMinValue) * curveView.Height / (graphMaxValue - graphMinValue));
+
+                float dx = mousePos.X - x;
+                float dy = mousePos.Y - y;
+                float distance = (float)Math.Sqrt(dx * dx + dy * dy);
+
+                if (distance <= 8f) // 8px click radius
+                    return i;
+            }
+            return -1;
+        }
+
         #endregion
+
+        #endregion
+
 
         /// <summary>
         /// Initializes the form after it's displayed. Loads presets into the dropdown,

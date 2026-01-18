@@ -25,6 +25,8 @@ namespace KSPCurveBuilder
         public const float MAX_REASONABLE_VALUE = 1e9f;
         public const int MAX_SAMPLES = 1000;
         public const string FLOAT_FORMAT = "G";
+        public const int HOVER_LABEL_OFFSET_X = 10;
+        public const int HOVER_LABEL_OFFSET_Y = -20;
     }
     public static class Formatting
     {

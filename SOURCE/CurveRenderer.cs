@@ -38,10 +38,13 @@ namespace KSPCurveBuilder
         private readonly Pen _pointPen;
         private readonly Brush _pointBrush;
         private const int GRID_LINES = 10;
+        private readonly int _highlightedPointIndex;
+        private readonly int _hoveredPointIndex;
 
         public CurveRenderer(Graphics g, List<FloatString4> points, FloatCurveStandalone curve,
             float minTime, float maxTime, float minValue, float maxValue,
-            int width, int height, float zoomLevel)
+            int width, int height, float zoomLevel, int highlightedPointIndex = -1,
+            int hoveredPointIndex = -1)
         {
             _g = g;
             _points = points;
@@ -53,6 +56,8 @@ namespace KSPCurveBuilder
             _width = width;
             _height = height;
             _zoomLevel = zoomLevel;
+            _highlightedPointIndex = highlightedPointIndex;
+            _hoveredPointIndex = hoveredPointIndex;
             _gridFont = new Font("Arial", 8);
             _titleFont = new Font("Arial", 10, FontStyle.Bold);
             _curvePen = new Pen(Color.LimeGreen, 2f);
@@ -68,6 +73,7 @@ namespace KSPCurveBuilder
             DrawGrid();
             DrawCurve();
             DrawPoints();
+            DrawHoverLabel();
             DrawLabels();
         }
 
@@ -131,13 +137,17 @@ namespace KSPCurveBuilder
 
         private void DrawPoints()
         {
-            foreach (var point in _points)
+            for (int i = 0; i < _points.Count; i++)
             {
-                float x = (point.Time - _minTime) * _width / (_maxTime - _minTime);
-                float y = _height - ((point.Value - _minValue) * _height / (_maxValue - _minValue));
+                bool isHighlighted = (i == _highlightedPointIndex);
+                float x = (_points[i].Time - _minTime) * _width / (_maxTime - _minTime);
+                float y = _height - ((_points[i].Value - _minValue) * _height / (_maxValue - _minValue));
 
-                _g.FillEllipse(_pointBrush, x - 4, y - 4, 8, 8);
-                _g.DrawEllipse(_pointPen, x - 4, y - 4, 8, 8);
+                Brush brush = isHighlighted ? Brushes.Yellow : _pointBrush;
+                Pen pen = isHighlighted ? new Pen(Color.Yellow, 2f) : _pointPen;
+
+                _g.FillEllipse(brush, x - 4, y - 4, 8, 8);
+                _g.DrawEllipse(pen, x - 4, y - 4, 8, 8);
             }
         }
 
@@ -160,6 +170,40 @@ namespace KSPCurveBuilder
             float labelX = _width - textSize.Width - 10;
             float labelY = _height - textSize.Height - 30;
             _g.DrawString(zoomText, _gridFont, Brushes.White, labelX, labelY);
+        }
+        /// <summary>
+        /// Draws a hover info box showing Time, Value, InTangent, OutTangent
+        /// for the currently hovered or dragged point.
+        /// </summary>
+        private void DrawHoverLabel()
+        {
+            if (_hoveredPointIndex < 0 || _hoveredPointIndex >= _points.Count) return;
+
+            var point = _points[_hoveredPointIndex];
+
+            // Position label near the point (but don't go off-screen)
+            float x = (point.Time - _minTime) * _width / (_maxTime - _minTime) + Constants.HOVER_LABEL_OFFSET_X;
+            float y = _height - ((point.Value - _minValue) * _height / (_maxValue - _minValue)) + Constants.HOVER_LABEL_OFFSET_Y;
+
+            // Keep label on screen
+            x = Math.Max(5, Math.Min(_width - 120, x));
+            y = Math.Max(5, Math.Min(_height - 60, y));
+
+            // Create label text
+            string label = $"Point {_hoveredPointIndex + 1}\n" +
+                           $"Time: {FloatString4.FormatNumber(point.Time, "F2")}\n" +
+                           $"Value: {FloatString4.FormatNumber(point.Value, "F3")}\n";
+
+            // Measure and draw background box
+            SizeF textSize = _g.MeasureString(label, _gridFont);
+            float boxWidth = textSize.Width + 10;
+            float boxHeight = textSize.Height + 8;
+
+            _g.FillRectangle(Brushes.Black, x, y, boxWidth, boxHeight);
+            _g.DrawRectangle(Pens.White, x, y, boxWidth, boxHeight);
+
+            // Draw text
+            _g.DrawString(label, _gridFont, Brushes.White, x + 5, y + 4);
         }
 
         private float CalculateNiceStep(float rawStep)
