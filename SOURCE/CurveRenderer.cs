@@ -4,11 +4,11 @@
  * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
  * Logic from that original project is used here and throughout.
  * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/).
+ * Original work copyright © 2015 Sarbian (https://github.com/sarbian ).
+ * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/ ).
  * 
  * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html or the LICENSE file for full terms.
+ * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
  */
 
 using System;
@@ -24,7 +24,7 @@ namespace KSPCurveBuilder
     /// Handles rendering the curve visualization to a Graphics surface.
     /// Implements IDisposable to properly clean up GDI+ resources.
     /// </summary>
-    public class CurveRenderer : IDisposable  // <-- ADDED: IDisposable
+    public class CurveRenderer : IDisposable
     {
         private readonly Graphics _g;
         private readonly List<FloatString4> _points;
@@ -38,11 +38,10 @@ namespace KSPCurveBuilder
         private readonly Pen _gridPen;
         private readonly Pen _pointPen;
         private readonly Brush _pointBrush;
-        private const int GRID_LINES = 10;
         private readonly int _highlightedPointIndex;
         private readonly int _hoveredPointIndex;
 
-        private bool _disposed = false;  // <-- ADDED: Disposal flag
+        private bool _disposed = false;
 
         public CurveRenderer(Graphics g, List<FloatString4> points, FloatCurveStandalone curve,
             float minTime, float maxTime, float minValue, float maxValue,
@@ -71,7 +70,6 @@ namespace KSPCurveBuilder
             _pointBrush = Brushes.White; // System brush, don't dispose
         }
 
-        // <-- ADDED: IDisposable implementation
         public void Dispose()
         {
             Dispose(true);
@@ -96,12 +94,6 @@ namespace KSPCurveBuilder
             }
         }
 
-        // <-- ADDED: Destructor for safety
-        ~CurveRenderer()
-        {
-            Dispose(false);
-        }
-
         /// <summary>Draws grid, curve line, points, and labels to the graphics surface.</summary>
         public void Render()
         {
@@ -121,8 +113,8 @@ namespace KSPCurveBuilder
 
             if (timeRange <= 0 || valueRange <= 0) return;
 
-            float timeStep = CalculateNiceStep(timeRange / GRID_LINES);
-            float valueStep = CalculateNiceStep(valueRange / GRID_LINES);
+            float timeStep = CalculateNiceStep(timeRange / Constants.GRID_LINES);
+            float valueStep = CalculateNiceStep(valueRange / Constants.GRID_LINES);
 
             float firstTime = (float)Math.Ceiling(_minTime / timeStep) * timeStep;
             float firstValue = (float)Math.Ceiling(_minValue / valueStep) * valueStep;
@@ -201,16 +193,12 @@ namespace KSPCurveBuilder
         private void DrawLabels()
         {
             string title = $"Curve Editor - {_points.Count} point(s)";
-            //string range = $"Time: [{_minTime:F1}, {_maxTime:F1}]  Value: [{_minValue:F2}, {_maxValue:F2}]";
-
             SizeF titleSize = _g.MeasureString(title, _titleFont);
-            //SizeF rangeSize = _g.MeasureString(range, _gridFont);
             float boxWidth = titleSize.Width + 5;
             float boxHeight = titleSize.Height + 10;
 
             _g.FillRectangle(Brushes.Black, 35, 5, boxWidth, boxHeight);
             _g.DrawString(title, _titleFont, Brushes.White, 40, 10);
-            //_g.DrawString(range, _gridFont, Brushes.White, 10, 30);
 
             string zoomText = $"Zoom: {_zoomLevel:F1}x";
             SizeF textSize = _g.MeasureString(zoomText, _gridFont);

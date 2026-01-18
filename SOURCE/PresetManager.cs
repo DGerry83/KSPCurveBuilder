@@ -92,7 +92,7 @@ namespace KSPCurveBuilder
             {
                 if (line.StartsWith("key"))
                 {
-                    var result = FloatString4.TryParseKeyString(line);
+                    var result = CurveParser.TryParseKeyString(line);
                     if (result.Success)
                         preset.Points.Add(result.Point);
                 }

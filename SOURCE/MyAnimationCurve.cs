@@ -123,28 +123,48 @@ namespace KSPCurveBuilder
         /// <summary>Evaluates curve at a time using Hermite interpolation.</summary>
         public float Evaluate(float time)
         {
-            if (time < 0) time = 0; // Prevent negative time issues
-
             if (_keys.Count == 0) return 0f;
             if (_keys.Count == 1) return _keys[0].Value;
 
-            if (time < _keys[0].Time)
+            if (time <= _keys[0].Time)
             {
                 return _preWrapMode == WrapMode.Loop ? Evaluate(LoopTime(time)) : _keys[0].Value;
             }
 
-            if (time > _keys[_keys.Count - 1].Time)
+            if (time >= _keys[_keys.Count - 1].Time)
             {
                 return _postWrapMode == WrapMode.Loop ? Evaluate(LoopTime(time)) : _keys[_keys.Count - 1].Value;
             }
 
-            int i = 0;
-            for (; i < _keys.Count - 1; i++)
+            // Binary search for the correct segment
+            int index = FindSegmentIndex(time);
+            return EvaluateSegment(index, time);
+        }
+
+        /// <summary>Finds the index of the keyframe that starts the segment containing the time value.</summary>
+        private int FindSegmentIndex(float time)
+        {
+            // Precondition: _keys.Count >= 2 and _keys[0].Time <= time <= _keys[_keys.Count - 1].Time
+            // Find smallest i such that time <= _keys[i + 1].Time
+
+            int low = 0;
+            int high = _keys.Count - 2; // Last valid segment index
+
+            while (low < high)
             {
-                if (time <= _keys[i + 1].Time) break;
+                int mid = low + (high - low) / 2;
+
+                if (time <= _keys[mid + 1].Time)
+                {
+                    high = mid;
+                }
+                else
+                {
+                    low = mid + 1;
+                }
             }
 
-            return EvaluateSegment(i, time);
+            return low;
         }
 
         private float EvaluateSegment(int index, float time)

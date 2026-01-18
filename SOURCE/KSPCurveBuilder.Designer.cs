@@ -4,11 +4,11 @@
  * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
  * Logic from that original project is used here and throughout.
  * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/).
+ * Original work copyright © 2015 Sarbian (https://github.com/sarbian ).
+ * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/ ).
  * 
- * This file is part of Curve Editor, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html or the LICENSE file for full terms.
+ * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
+ * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
  */
 
 namespace KSPCurveBuilder
@@ -29,10 +29,6 @@ namespace KSPCurveBuilder
             if (disposing && (components != null))
             {
                 components.Dispose();
-                titleFont?.Dispose();
-                curvePen?.Dispose();
-                gridPen?.Dispose();
-                pointPen?.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -94,6 +90,7 @@ namespace KSPCurveBuilder
             buttonNewCurve.Size = new System.Drawing.Size(133, 58);
             buttonNewCurve.TabIndex = 2;
             buttonNewCurve.Text = "New Curve";
+            buttonNewCurve.UseVisualStyleBackColor = true;
             // 
             // buttonSmooth
             // 
@@ -103,6 +100,7 @@ namespace KSPCurveBuilder
             buttonSmooth.Size = new System.Drawing.Size(133, 58);
             buttonSmooth.TabIndex = 3;
             buttonSmooth.Text = "Smooth";
+            buttonSmooth.UseVisualStyleBackColor = true;
             // 
             // buttonCopy
             // 
@@ -112,6 +110,7 @@ namespace KSPCurveBuilder
             buttonCopy.Size = new System.Drawing.Size(133, 58);
             buttonCopy.TabIndex = 4;
             buttonCopy.Text = "Copy";
+            buttonCopy.UseVisualStyleBackColor = true;
             // 
             // buttonPaste
             // 
@@ -121,6 +120,7 @@ namespace KSPCurveBuilder
             buttonPaste.Size = new System.Drawing.Size(133, 58);
             buttonPaste.TabIndex = 5;
             buttonPaste.Text = "Paste";
+            buttonPaste.UseVisualStyleBackColor = true;
             // 
             // buttonAddNode
             // 
@@ -130,6 +130,7 @@ namespace KSPCurveBuilder
             buttonAddNode.Size = new System.Drawing.Size(133, 58);
             buttonAddNode.TabIndex = 6;
             buttonAddNode.Text = "Add Node";
+            buttonAddNode.UseVisualStyleBackColor = true;
             // 
             // checkBoxSort
             // 
@@ -140,6 +141,7 @@ namespace KSPCurveBuilder
             checkBoxSort.Size = new System.Drawing.Size(71, 29);
             checkBoxSort.TabIndex = 7;
             checkBoxSort.Text = "Sort";
+            checkBoxSort.UseVisualStyleBackColor = true;
             // 
             // dataPointEditor
             // 
@@ -160,7 +162,7 @@ namespace KSPCurveBuilder
             buttonResetZoom.Size = new System.Drawing.Size(133, 58);
             buttonResetZoom.TabIndex = 9;
             buttonResetZoom.Text = "Reset Zoom";
-            buttonResetZoom.Click += buttonResetZoom_Click;
+            buttonResetZoom.UseVisualStyleBackColor = true;
             // 
             // presetDropdown
             // 
@@ -230,18 +232,21 @@ namespace KSPCurveBuilder
             Controls.Add(presetNameTextbox);
             Controls.Add(presetDropdown);
             Controls.Add(buttonResetZoom);
-            Controls.Add(curveView);
-            Controls.Add(curveText);
-            Controls.Add(buttonNewCurve);
-            Controls.Add(buttonSmooth);
-            Controls.Add(buttonCopy);
-            Controls.Add(buttonPaste);
-            Controls.Add(buttonAddNode);
-            Controls.Add(checkBoxSort);
             Controls.Add(dataPointEditor);
+            Controls.Add(checkBoxSort);
+            Controls.Add(buttonAddNode);
+            Controls.Add(buttonPaste);
+            Controls.Add(buttonCopy);
+            Controls.Add(buttonSmooth);
+            Controls.Add(buttonNewCurve);
+            Controls.Add(curveText);
+            Controls.Add(curveView);
             Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             Name = "KSPCurveBuilder";
             Text = "KSP Curve Builder";
+            // FIXED: Use the correct enum syntax
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
             ((System.ComponentModel.ISupportInitialize)curveView).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataPointEditor).EndInit();
             ResumeLayout(false);
@@ -269,4 +274,3 @@ namespace KSPCurveBuilder
         private System.Windows.Forms.Button buttonRedo;
     }
 }
-

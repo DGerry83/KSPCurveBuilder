@@ -89,6 +89,7 @@ namespace KSPCurveBuilder
         {
             return this.fCurve.Evaluate(time);
         }
+
         /// <summary>Loads curve from text lines in "key = time value in out" format.</summary>
         public void Load(string[] lines)
         {
@@ -98,24 +99,17 @@ namespace KSPCurveBuilder
 
             foreach (string line in lines)
             {
-                string trimmedLine = line.Trim();
-                if (string.IsNullOrEmpty(trimmedLine))
-                    continue;
-
-                if (trimmedLine.StartsWith("key", StringComparison.OrdinalIgnoreCase))
+                var result = CurveParser.TryParseKeyString(line.Trim());
+                if (result.Success && result.Point != null)
                 {
-                    var parseResult = FloatString4.TryParseKeyString(trimmedLine);
-                    if (parseResult.Success)
-                    {
-                        MyKeyframe key = parseResult.Point.ToKeyframe();
-                        this.fCurve.AddKey(key);
-                        this._minTime = Math.Min(this._minTime, key.Time);
-                        this._maxTime = Math.Max(this._maxTime, key.Time);
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"FloatCurve: Failed to parse line '{trimmedLine}': {parseResult.ErrorMessage}");
-                    }
+                    MyKeyframe key = result.Point.ToKeyframe();
+                    this.fCurve.AddKey(key);
+                    this._minTime = Math.Min(this._minTime, key.Time);
+                    this._maxTime = Math.Max(this._maxTime, key.Time);
+                }
+                else
+                {
+                    Debug.WriteLine($"FloatCurve: Failed to parse line '{line}': {result.ErrorMessage}");
                 }
             }
         }

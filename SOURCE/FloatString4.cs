@@ -110,60 +110,7 @@ namespace KSPCurveBuilder
         public FloatString4 WithTangents(float newInTangent, float newOutTangent)
         {
             return new FloatString4(Time, Value, newInTangent, newOutTangent);
-        }
-
-        /// <summary>Parses a key string like "key = 1.0 2.5 0 0".</summary>
-        public static FloatString4 FromKeyString(string keyString)
-        {
-            var result = TryParseKeyString(keyString);
-            return result.Point ?? new FloatString4();
-        }
-
-        /// <summary>Parses a key string and returns success status, error message, and point.</summary>
-        public static (bool Success, string? ErrorMessage, FloatString4? Point) TryParseKeyString(string? keyString)
-        {
-            if (string.IsNullOrWhiteSpace(keyString))
-            {
-                return (false, "Input string is null or empty", null);
-            }
-
-            try
-            {
-                var parts = keyString.Split(new char[] { '=', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts.Length < 3)
-                {
-                    return (false, "Invalid format: expected 'key = time value [inTangent] [outTangent]'", null);
-                }
-
-                var culture = CultureInfo.InvariantCulture;
-
-                if (!float.TryParse(parts[1], NumberStyles.Float, culture, out float time))
-                    return (false, $"Invalid time value: '{parts[1]}'", null);
-
-                if (!float.TryParse(parts[2], NumberStyles.Float, culture, out float value))
-                    return (false, $"Invalid value: '{parts[2]}'", null);
-
-                float inTangent = 0f, outTangent = 0f;
-                if (parts.Length > 3 && !string.IsNullOrEmpty(parts[3]))
-                {
-                    if (!float.TryParse(parts[3], NumberStyles.Float, culture, out inTangent))
-                        return (false, $"Invalid inTangent: '{parts[3]}'", null);
-                }
-
-                if (parts.Length > 4 && !string.IsNullOrEmpty(parts[4]))
-                {
-                    if (!float.TryParse(parts[4], NumberStyles.Float, culture, out outTangent))
-                        return (false, $"Invalid outTangent: '{parts[4]}'", null);
-                }
-
-                return (true, "", new FloatString4(time, value, inTangent, outTangent));
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Exception: {ex.Message}", null);
-            }
-        }
+        }    
 
         /// <summary>Formats number with specified format, removing ".0" from integer values.</summary>
         public static string FormatNumber(float number, string format)
