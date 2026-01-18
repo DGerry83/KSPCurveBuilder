@@ -7,27 +7,14 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyTitle("KSPCurveBuilder")]
 [assembly: AssemblyDescription("A standalone windows app for creating, editing, and visualizing float curves for KSP")]
-[assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("KSPCurveBuilder")]
 [assembly: AssemblyCopyright("Copyright ©  2026")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("afa0399e-0e81-4181-96ac-484c17ae3f93")]
+// Version information is provided by the SDK; keep explicit version attributes only if required
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version
-//      Build Number
-//      Revision
-//
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
