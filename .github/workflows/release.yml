@@ -27,13 +27,14 @@ jobs:
         run: dotnet build "KSPCurveBuilder.slnx" -c Release --no-restore
 
       - name: Publish
+        shell: pwsh
         run: |
-          dotnet publish "KSPCurveBuilder.csproj" \
-            -c Release \
-            --self-contained false \
-            -p:PublishSingleFile=true \
-            -p:IncludeNativeLibrariesForSelfExtract=false \
-            -p:EnableCompressionInSingleFile=true \
+          dotnet publish "KSPCurveBuilder.csproj" `
+            -c Release `
+            --self-contained false `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=false `
+            -p:EnableCompressionInSingleFile=true `
             -o publish
 
       - name: Archive publish output
