@@ -31,6 +31,7 @@ jobs:
         run: |
           dotnet publish "KSPCurveBuilder.csproj" `
             -c Release `
+            -r win-x64 `
             --self-contained false `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=false `
