@@ -8,6 +8,7 @@
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <AssemblyName>KSPCurveBuilder</AssemblyName>
     <RootNamespace>KSPCurveBuilder</RootNamespace>
+    <ApplicationIcon>CurveIcon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="App.config" />
