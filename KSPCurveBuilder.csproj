@@ -31,9 +31,7 @@
     <Compile Include="SOURCE\FloatString4.cs" />
     <Compile Include="SOURCE\FloatCurveStandalone.cs" />
     <Compile Include="SOURCE\MyAnimationCurve.cs" />
-    <Compile Include="SOURCE\KSPCurveBuilder.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="SOURCE\KSPCurveBuilder.cs" />
     <Compile Include="SOURCE\KSPCurveBuilder.Designer.cs">
       <DependentUpon>KSPCurveBuilder.cs</DependentUpon>
     </Compile>
@@ -46,6 +44,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <Compile Include="SOURCE\UndoManager.cs" />
     <None Include=".github\workflows\release.yml" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

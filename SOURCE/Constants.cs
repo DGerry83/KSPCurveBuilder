@@ -7,7 +7,7 @@
  * Original work copyright © 2015 Sarbian (https://github.com/sarbian).
  * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/).
  * 
- * This file is part of Curve Editor, free software under the GPLv2 license. 
+ * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
  * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html or the LICENSE file for full terms.
  */
 
@@ -27,6 +27,8 @@ namespace KSPCurveBuilder
         public const string FLOAT_FORMAT = "G";
         public const int HOVER_LABEL_OFFSET_X = 10;
         public const int HOVER_LABEL_OFFSET_Y = -20;
+        public const int DRAG_EDGE_THRESHOLD = 5;  // Pixels from screen edge to trigger wrap
+        public const int DRAG_WARP_DISTANCE = 50;   // Distance to warp cursor back
     }
     public static class Formatting
     {

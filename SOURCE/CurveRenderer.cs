@@ -7,7 +7,7 @@
  * Original work copyright © 2015 Sarbian (https://github.com/sarbian).
  * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/).
  * 
- * This file is part of Curve Editor, free software under the GPLv2 license. 
+ * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
  * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html or the LICENSE file for full terms.
  */
 
@@ -22,8 +22,9 @@ namespace KSPCurveBuilder
 {
     /// <summary>
     /// Handles rendering the curve visualization to a Graphics surface.
+    /// Implements IDisposable to properly clean up GDI+ resources.
     /// </summary>
-    public class CurveRenderer
+    public class CurveRenderer : IDisposable  // <-- ADDED: IDisposable
     {
         private readonly Graphics _g;
         private readonly List<FloatString4> _points;
@@ -40,6 +41,8 @@ namespace KSPCurveBuilder
         private const int GRID_LINES = 10;
         private readonly int _highlightedPointIndex;
         private readonly int _hoveredPointIndex;
+
+        private bool _disposed = false;  // <-- ADDED: Disposal flag
 
         public CurveRenderer(Graphics g, List<FloatString4> points, FloatCurveStandalone curve,
             float minTime, float maxTime, float minValue, float maxValue,
@@ -58,13 +61,47 @@ namespace KSPCurveBuilder
             _zoomLevel = zoomLevel;
             _highlightedPointIndex = highlightedPointIndex;
             _hoveredPointIndex = hoveredPointIndex;
+
+            // Create resources (these must be disposed)
             _gridFont = new Font("Arial", 8);
             _titleFont = new Font("Arial", 10, FontStyle.Bold);
             _curvePen = new Pen(Color.LimeGreen, 2f);
             _gridPen = new Pen(Color.FromArgb(60, 60, 60), 1f);
             _pointPen = new Pen(Color.White, 2f);
-            _pointBrush = Brushes.White;
+            _pointBrush = Brushes.White; // System brush, don't dispose
         }
+
+        // <-- ADDED: IDisposable implementation
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources
+                    _gridFont?.Dispose();
+                    _titleFont?.Dispose();
+                    _curvePen?.Dispose();
+                    _gridPen?.Dispose();
+                    _pointPen?.Dispose();
+                    // _pointBrush is Brushes.White (system brush), do NOT dispose
+                }
+                _disposed = true;
+            }
+        }
+
+        // <-- ADDED: Destructor for safety
+        ~CurveRenderer()
+        {
+            Dispose(false);
+        }
+
         /// <summary>Draws grid, curve line, points, and labels to the graphics surface.</summary>
         public void Render()
         {
@@ -144,10 +181,20 @@ namespace KSPCurveBuilder
                 float y = _height - ((_points[i].Value - _minValue) * _height / (_maxValue - _minValue));
 
                 Brush brush = isHighlighted ? Brushes.Yellow : _pointBrush;
-                Pen pen = isHighlighted ? new Pen(Color.Yellow, 2f) : _pointPen;
 
+                // Draw the point with appropriate pen
                 _g.FillEllipse(brush, x - 4, y - 4, 8, 8);
-                _g.DrawEllipse(pen, x - 4, y - 4, 8, 8);
+
+                if (isHighlighted)
+                {
+                    // Use 'using' ONLY for locally created pen
+                    using Pen highlightPen = new(Color.Yellow, 2f);
+                    _g.DrawEllipse(highlightPen, x - 4, y - 4, 8, 8);
+                }
+                else
+                {
+                    _g.DrawEllipse(_pointPen, x - 4, y - 4, 8, 8);
+                }
             }
         }
 
@@ -171,6 +218,7 @@ namespace KSPCurveBuilder
             float labelY = _height - textSize.Height - 30;
             _g.DrawString(zoomText, _gridFont, Brushes.White, labelX, labelY);
         }
+
         /// <summary>
         /// Draws a hover info box showing Time, Value, InTangent, OutTangent
         /// for the currently hovered or dragged point.

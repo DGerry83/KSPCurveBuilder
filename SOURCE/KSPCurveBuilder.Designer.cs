@@ -45,181 +45,207 @@ namespace KSPCurveBuilder
         /// </summary>
         private void InitializeComponent()
         {
-            this.curveView = new System.Windows.Forms.PictureBox();
-            this.curveText = new System.Windows.Forms.TextBox();
-            this.buttonNewCurve = new System.Windows.Forms.Button();
-            this.buttonSmooth = new System.Windows.Forms.Button();
-            this.buttonCopy = new System.Windows.Forms.Button();
-            this.buttonPaste = new System.Windows.Forms.Button();
-            this.buttonAddNode = new System.Windows.Forms.Button();
-            this.checkBoxSort = new System.Windows.Forms.CheckBox();
-            this.dataPointEditor = new System.Windows.Forms.DataGridView();
-            this.buttonResetZoom = new System.Windows.Forms.Button();
-            this.presetDropdown = new System.Windows.Forms.ComboBox();
-            this.presetNameTextbox = new System.Windows.Forms.TextBox();
-            this.buttonSavePreset = new System.Windows.Forms.Button();
-            this.buttonDeletePreset = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.curveView)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataPointEditor)).BeginInit();
-            this.SuspendLayout();
+            curveView = new System.Windows.Forms.PictureBox();
+            curveText = new System.Windows.Forms.TextBox();
+            buttonNewCurve = new System.Windows.Forms.Button();
+            buttonSmooth = new System.Windows.Forms.Button();
+            buttonCopy = new System.Windows.Forms.Button();
+            buttonPaste = new System.Windows.Forms.Button();
+            buttonAddNode = new System.Windows.Forms.Button();
+            checkBoxSort = new System.Windows.Forms.CheckBox();
+            dataPointEditor = new System.Windows.Forms.DataGridView();
+            buttonResetZoom = new System.Windows.Forms.Button();
+            presetDropdown = new System.Windows.Forms.ComboBox();
+            presetNameTextbox = new System.Windows.Forms.TextBox();
+            buttonSavePreset = new System.Windows.Forms.Button();
+            buttonDeletePreset = new System.Windows.Forms.Button();
+            buttonUndo = new System.Windows.Forms.Button();
+            buttonRedo = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)curveView).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dataPointEditor).BeginInit();
+            SuspendLayout();
             // 
             // curveView
             // 
-            this.curveView.BackColor = System.Drawing.Color.Black;
-            this.curveView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.curveView.Location = new System.Drawing.Point(18, 18);
-            this.curveView.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.curveView.Name = "curveView";
-            this.curveView.Size = new System.Drawing.Size(657, 460);
-            this.curveView.TabIndex = 0;
-            this.curveView.TabStop = false;
+            curveView.BackColor = System.Drawing.Color.Black;
+            curveView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            curveView.Location = new System.Drawing.Point(20, 22);
+            curveView.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            curveView.Name = "curveView";
+            curveView.Size = new System.Drawing.Size(730, 574);
+            curveView.TabIndex = 0;
+            curveView.TabStop = false;
             // 
             // curveText
             // 
-            this.curveText.Location = new System.Drawing.Point(539, 488);
-            this.curveText.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.curveText.Multiline = true;
-            this.curveText.Name = "curveText";
-            this.curveText.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.curveText.Size = new System.Drawing.Size(264, 158);
-            this.curveText.TabIndex = 1;
+            curveText.Location = new System.Drawing.Point(599, 610);
+            curveText.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            curveText.Multiline = true;
+            curveText.Name = "curveText";
+            curveText.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            curveText.Size = new System.Drawing.Size(293, 196);
+            curveText.TabIndex = 1;
             // 
             // buttonNewCurve
             // 
-            this.buttonNewCurve.Location = new System.Drawing.Point(683, 18);
-            this.buttonNewCurve.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.buttonNewCurve.Name = "buttonNewCurve";
-            this.buttonNewCurve.Size = new System.Drawing.Size(120, 46);
-            this.buttonNewCurve.TabIndex = 2;
-            this.buttonNewCurve.Text = "New Curve";
+            buttonNewCurve.Location = new System.Drawing.Point(759, 22);
+            buttonNewCurve.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonNewCurve.Name = "buttonNewCurve";
+            buttonNewCurve.Size = new System.Drawing.Size(133, 58);
+            buttonNewCurve.TabIndex = 2;
+            buttonNewCurve.Text = "New Curve";
             // 
             // buttonSmooth
             // 
-            this.buttonSmooth.Location = new System.Drawing.Point(539, 712);
-            this.buttonSmooth.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.buttonSmooth.Name = "buttonSmooth";
-            this.buttonSmooth.Size = new System.Drawing.Size(120, 46);
-            this.buttonSmooth.TabIndex = 3;
-            this.buttonSmooth.Text = "Smooth";
+            buttonSmooth.Location = new System.Drawing.Point(599, 890);
+            buttonSmooth.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonSmooth.Name = "buttonSmooth";
+            buttonSmooth.Size = new System.Drawing.Size(133, 58);
+            buttonSmooth.TabIndex = 3;
+            buttonSmooth.Text = "Smooth";
             // 
             // buttonCopy
             // 
-            this.buttonCopy.Location = new System.Drawing.Point(683, 656);
-            this.buttonCopy.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.buttonCopy.Name = "buttonCopy";
-            this.buttonCopy.Size = new System.Drawing.Size(120, 46);
-            this.buttonCopy.TabIndex = 4;
-            this.buttonCopy.Text = "Copy";
+            buttonCopy.Location = new System.Drawing.Point(759, 820);
+            buttonCopy.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonCopy.Name = "buttonCopy";
+            buttonCopy.Size = new System.Drawing.Size(133, 58);
+            buttonCopy.TabIndex = 4;
+            buttonCopy.Text = "Copy";
             // 
             // buttonPaste
             // 
-            this.buttonPaste.Location = new System.Drawing.Point(683, 74);
-            this.buttonPaste.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.buttonPaste.Name = "buttonPaste";
-            this.buttonPaste.Size = new System.Drawing.Size(120, 46);
-            this.buttonPaste.TabIndex = 5;
-            this.buttonPaste.Text = "Paste";
+            buttonPaste.Location = new System.Drawing.Point(759, 92);
+            buttonPaste.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonPaste.Name = "buttonPaste";
+            buttonPaste.Size = new System.Drawing.Size(133, 58);
+            buttonPaste.TabIndex = 5;
+            buttonPaste.Text = "Paste";
             // 
             // buttonAddNode
             // 
-            this.buttonAddNode.Location = new System.Drawing.Point(539, 656);
-            this.buttonAddNode.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.buttonAddNode.Name = "buttonAddNode";
-            this.buttonAddNode.Size = new System.Drawing.Size(120, 46);
-            this.buttonAddNode.TabIndex = 6;
-            this.buttonAddNode.Text = "Add Node";
+            buttonAddNode.Location = new System.Drawing.Point(599, 820);
+            buttonAddNode.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonAddNode.Name = "buttonAddNode";
+            buttonAddNode.Size = new System.Drawing.Size(133, 58);
+            buttonAddNode.TabIndex = 6;
+            buttonAddNode.Text = "Add Node";
             // 
             // checkBoxSort
             // 
-            this.checkBoxSort.AutoSize = true;
-            this.checkBoxSort.Location = new System.Drawing.Point(683, 454);
-            this.checkBoxSort.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.checkBoxSort.Name = "checkBoxSort";
-            this.checkBoxSort.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxSort.TabIndex = 7;
-            this.checkBoxSort.Text = "Sort";
+            checkBoxSort.AutoSize = true;
+            checkBoxSort.Location = new System.Drawing.Point(759, 568);
+            checkBoxSort.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            checkBoxSort.Name = "checkBoxSort";
+            checkBoxSort.Size = new System.Drawing.Size(71, 29);
+            checkBoxSort.TabIndex = 7;
+            checkBoxSort.Text = "Sort";
             // 
             // dataPointEditor
             // 
-            this.dataPointEditor.ColumnHeadersHeight = 34;
-            this.dataPointEditor.Location = new System.Drawing.Point(18, 488);
-            this.dataPointEditor.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.dataPointEditor.MultiSelect = false;
-            this.dataPointEditor.Name = "dataPointEditor";
-            this.dataPointEditor.RowHeadersWidth = 62;
-            this.dataPointEditor.Size = new System.Drawing.Size(513, 286);
-            this.dataPointEditor.TabIndex = 8;
+            dataPointEditor.ColumnHeadersHeight = 34;
+            dataPointEditor.Location = new System.Drawing.Point(20, 610);
+            dataPointEditor.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            dataPointEditor.MultiSelect = false;
+            dataPointEditor.Name = "dataPointEditor";
+            dataPointEditor.RowHeadersWidth = 62;
+            dataPointEditor.Size = new System.Drawing.Size(570, 358);
+            dataPointEditor.TabIndex = 8;
             // 
             // buttonResetZoom
             // 
-            this.buttonResetZoom.Location = new System.Drawing.Point(683, 398);
-            this.buttonResetZoom.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.buttonResetZoom.Name = "buttonResetZoom";
-            this.buttonResetZoom.Size = new System.Drawing.Size(120, 46);
-            this.buttonResetZoom.TabIndex = 9;
-            this.buttonResetZoom.Text = "Reset Zoom";
-            this.buttonResetZoom.Click += new System.EventHandler(this.buttonResetZoom_Click);
+            buttonResetZoom.Location = new System.Drawing.Point(759, 498);
+            buttonResetZoom.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonResetZoom.Name = "buttonResetZoom";
+            buttonResetZoom.Size = new System.Drawing.Size(133, 58);
+            buttonResetZoom.TabIndex = 9;
+            buttonResetZoom.Text = "Reset Zoom";
+            buttonResetZoom.Click += buttonResetZoom_Click;
             // 
             // presetDropdown
             // 
-            this.presetDropdown.FormattingEnabled = true;
-            this.presetDropdown.Location = new System.Drawing.Point(682, 248);
-            this.presetDropdown.Name = "presetDropdown";
-            this.presetDropdown.Size = new System.Drawing.Size(121, 28);
-            this.presetDropdown.TabIndex = 10;
+            presetDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            presetDropdown.FormattingEnabled = true;
+            presetDropdown.Location = new System.Drawing.Point(758, 310);
+            presetDropdown.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            presetDropdown.Name = "presetDropdown";
+            presetDropdown.Size = new System.Drawing.Size(134, 33);
+            presetDropdown.TabIndex = 10;
             // 
             // presetNameTextbox
             // 
-            this.presetNameTextbox.Location = new System.Drawing.Point(682, 216);
-            this.presetNameTextbox.Name = "presetNameTextbox";
-            this.presetNameTextbox.Size = new System.Drawing.Size(100, 26);
-            this.presetNameTextbox.TabIndex = 11;
+            presetNameTextbox.Location = new System.Drawing.Point(758, 270);
+            presetNameTextbox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            presetNameTextbox.Name = "presetNameTextbox";
+            presetNameTextbox.Size = new System.Drawing.Size(111, 31);
+            presetNameTextbox.TabIndex = 11;
             // 
             // buttonSavePreset
             // 
-            this.buttonSavePreset.Location = new System.Drawing.Point(682, 177);
-            this.buttonSavePreset.Name = "buttonSavePreset";
-            this.buttonSavePreset.Size = new System.Drawing.Size(79, 33);
-            this.buttonSavePreset.TabIndex = 12;
-            this.buttonSavePreset.Text = "Save";
-            this.buttonSavePreset.UseVisualStyleBackColor = true;
-            //this.buttonSavePreset.Click += new System.EventHandler(this.buttonSavePreset_Click);
+            buttonSavePreset.Location = new System.Drawing.Point(758, 221);
+            buttonSavePreset.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            buttonSavePreset.Name = "buttonSavePreset";
+            buttonSavePreset.Size = new System.Drawing.Size(88, 41);
+            buttonSavePreset.TabIndex = 12;
+            buttonSavePreset.Text = "Save";
+            buttonSavePreset.UseVisualStyleBackColor = true;
             // 
             // buttonDeletePreset
             // 
-            this.buttonDeletePreset.Location = new System.Drawing.Point(682, 282);
-            this.buttonDeletePreset.Name = "buttonDeletePreset";
-            this.buttonDeletePreset.Size = new System.Drawing.Size(79, 33);
-            this.buttonDeletePreset.TabIndex = 13;
-            this.buttonDeletePreset.Text = "Delete";
-            this.buttonDeletePreset.UseVisualStyleBackColor = true;
+            buttonDeletePreset.Location = new System.Drawing.Point(758, 352);
+            buttonDeletePreset.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            buttonDeletePreset.Name = "buttonDeletePreset";
+            buttonDeletePreset.Size = new System.Drawing.Size(88, 41);
+            buttonDeletePreset.TabIndex = 13;
+            buttonDeletePreset.Text = "Delete";
+            buttonDeletePreset.UseVisualStyleBackColor = true;
+            // 
+            // buttonUndo
+            // 
+            buttonUndo.Location = new System.Drawing.Point(740, 914);
+            buttonUndo.Name = "buttonUndo";
+            buttonUndo.Size = new System.Drawing.Size(73, 34);
+            buttonUndo.TabIndex = 14;
+            buttonUndo.Text = "Undo";
+            buttonUndo.UseVisualStyleBackColor = true;
+            // 
+            // buttonRedo
+            // 
+            buttonRedo.Location = new System.Drawing.Point(819, 914);
+            buttonRedo.Name = "buttonRedo";
+            buttonRedo.Size = new System.Drawing.Size(73, 34);
+            buttonRedo.TabIndex = 15;
+            buttonRedo.Text = "Redo";
+            buttonRedo.UseVisualStyleBackColor = true;
             // 
             // KSPCurveBuilder
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(821, 788);
-            this.Controls.Add(this.buttonDeletePreset);
-            this.Controls.Add(this.buttonSavePreset);
-            this.Controls.Add(this.presetNameTextbox);
-            this.Controls.Add(this.presetDropdown);
-            this.Controls.Add(this.buttonResetZoom);
-            this.Controls.Add(this.curveView);
-            this.Controls.Add(this.curveText);
-            this.Controls.Add(this.buttonNewCurve);
-            this.Controls.Add(this.buttonSmooth);
-            this.Controls.Add(this.buttonCopy);
-            this.Controls.Add(this.buttonPaste);
-            this.Controls.Add(this.buttonAddNode);
-            this.Controls.Add(this.checkBoxSort);
-            this.Controls.Add(this.dataPointEditor);
-            this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.Name = "KSPCurveBuilder";
-            this.Text = "KSP Curve Builder";
-            ((System.ComponentModel.ISupportInitialize)(this.curveView)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataPointEditor)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(912, 985);
+            Controls.Add(buttonRedo);
+            Controls.Add(buttonUndo);
+            Controls.Add(buttonDeletePreset);
+            Controls.Add(buttonSavePreset);
+            Controls.Add(presetNameTextbox);
+            Controls.Add(presetDropdown);
+            Controls.Add(buttonResetZoom);
+            Controls.Add(curveView);
+            Controls.Add(curveText);
+            Controls.Add(buttonNewCurve);
+            Controls.Add(buttonSmooth);
+            Controls.Add(buttonCopy);
+            Controls.Add(buttonPaste);
+            Controls.Add(buttonAddNode);
+            Controls.Add(checkBoxSort);
+            Controls.Add(dataPointEditor);
+            Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            Name = "KSPCurveBuilder";
+            Text = "KSP Curve Builder";
+            ((System.ComponentModel.ISupportInitialize)curveView).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dataPointEditor).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 
@@ -239,6 +265,8 @@ namespace KSPCurveBuilder
         private System.Windows.Forms.TextBox presetNameTextbox;
         private System.Windows.Forms.Button buttonSavePreset;
         private System.Windows.Forms.Button buttonDeletePreset;
+        private System.Windows.Forms.Button buttonUndo;
+        private System.Windows.Forms.Button buttonRedo;
     }
 }
 

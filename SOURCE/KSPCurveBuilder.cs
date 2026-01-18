@@ -4,37 +4,37 @@
  * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
  * Logic from that original project is used here and throughout.
  * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/).
+ * Original work copyright © 2015 Sarbian (https://github.com/sarbian ).
+ * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/ ).
  * 
- * This file is part of Curve Editor, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html or the LICENSE file for full terms.
+ * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
+ * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
  */
+
+#nullable enable
 
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace KSPCurveBuilder
 {
     /// <summary>
     /// Main editor form for creating and editing float curves with support for
     /// saving/loading presets, real-time curve visualization, and interactive editing.
-    /// Includes pan/zoom functionality for the graph view and drag-to-edit controls
-    /// for curve points.
     /// </summary>
     public partial class KSPCurveBuilder : Form
     {
         // Data storage
         private List<FloatString4> points = new List<FloatString4>();
-        private BindingList<FloatString4> pointsBindingList;
+        private BindingList<FloatString4>? pointsBindingList = null;
 
         // Drawing settings
         private Pen curvePen = new Pen(Color.LimeGreen, 2f);
@@ -59,46 +59,64 @@ namespace KSPCurveBuilder
 
         // Pan/Zoom Control
         private float zoomLevel = 1.0f;
-        private PointF panCenter = new PointF(0.5f, 0.5f); // 0.5 = centered
+        private PointF panCenter = new PointF(0.5f, 0.5f);
         private Point panDragStart = Point.Empty;
         private bool isPanning = false;
         private bool isDraggingPoint = false;
         private int draggedPointIndex = -1;
-        private PointF dragStartGraphPos;
         private int hoveredPointIndex = -1;
 
         /// <summary>Initializes the form and sets up all controls.</summary>
         public KSPCurveBuilder()
         {
             InitializeComponent();
-            typeof(PictureBox).InvokeMember("DoubleBuffered",
-                System.Reflection.BindingFlags.SetProperty |
-                System.Reflection.BindingFlags.Instance |
-                System.Reflection.BindingFlags.NonPublic,
-                null, curveView, new object[] { true });
-            this.FormBorderStyle = FormBorderStyle.FixedSingle; // or FixedDialog
+
+            if (curveView != null)
+            {
+                typeof(PictureBox).InvokeMember("DoubleBuffered",
+                    System.Reflection.BindingFlags.SetProperty |
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.NonPublic,
+                    null, curveView, new object[] { true });
+            }
+
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-            this.Icon = global::KSPCurveBuilder.Properties.Resources.CurveIcon;
+
+            // <-- ADDED: Null check for icon resource
+            try
+            {
+                this.Icon = global::KSPCurveBuilder.Properties.Resources.CurveIcon;
+            }
+            catch (NullReferenceException)
+            {
+                Debug.WriteLine("Warning: CurveIcon resource not found");
+            }
+
             this.Shown += new EventHandler(Form1_Shown);
             SetupDataGridView();
             SetupEvents();
             UpdateAll();
-            presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+
+            // <-- ADDED: Null check before event subscription
+            if (presetDropdown != null)
+            {
+                presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+            }
         }
 
         private void SetupDataGridView()
         {
-            // Configure DataGridView columns
             dataPointEditor.AutoGenerateColumns = false;
             dataPointEditor.AllowUserToAddRows = false;
             dataPointEditor.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataPointEditor.RowHeadersVisible = false;
 
-            // Add columns
+            // Add columns with new property names
             dataPointEditor.Columns.Add(new DataGridViewTextBoxColumn()
             {
                 HeaderText = "Time",
-                DataPropertyName = "Time",
+                DataPropertyName = "TimeString", // <-- CHANGED from "Time"
                 Width = 60,
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             });
@@ -106,7 +124,7 @@ namespace KSPCurveBuilder
             dataPointEditor.Columns.Add(new DataGridViewTextBoxColumn()
             {
                 HeaderText = "Value",
-                DataPropertyName = "Value",
+                DataPropertyName = "ValueString", // <-- CHANGED from "Value"
                 Width = 80,
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             });
@@ -114,7 +132,7 @@ namespace KSPCurveBuilder
             dataPointEditor.Columns.Add(new DataGridViewTextBoxColumn()
             {
                 HeaderText = "InTan",
-                DataPropertyName = "InTangent",
+                DataPropertyName = "InTangentString", // <-- CHANGED from "InTangent"
                 Width = 60,
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             });
@@ -122,7 +140,7 @@ namespace KSPCurveBuilder
             dataPointEditor.Columns.Add(new DataGridViewTextBoxColumn()
             {
                 HeaderText = "OutTan",
-                DataPropertyName = "OutTangent",
+                DataPropertyName = "OutTangentString", // <-- CHANGED from "OutTangent"
                 Width = 60,
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             });
@@ -138,26 +156,42 @@ namespace KSPCurveBuilder
             };
             dataPointEditor.Columns.Add(removeColumn);
 
-            // Create binding list
             pointsBindingList = new BindingList<FloatString4>(points);
             dataPointEditor.DataSource = pointsBindingList;
         }
-        private void DataPointEditor_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+
+
+        private void DataPointEditor_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (e == null || e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (points == null || points.Count <= e.RowIndex) return;
+
             var point = points[e.RowIndex];
 
-            if (e.ColumnIndex == 0) e.Value = FloatString4.FormatNumber(point.Time, Formatting.TIME_DECIMAL_PLACES);
-            if (e.ColumnIndex == 1) e.Value = FloatString4.FormatNumber(point.Value, Formatting.VALUE_DECIMAL_PLACES);
-            if (e.ColumnIndex == 2) e.Value = FloatString4.FormatNumber(point.InTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
-            if (e.ColumnIndex == 3) e.Value = FloatString4.FormatNumber(point.OutTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
+            switch (e.ColumnIndex)
+            {
+                case 0:
+                    e.Value = FloatString4.FormatNumber(point.Time, Formatting.TIME_DECIMAL_PLACES);
+                    break;
+                case 1:
+                    e.Value = FloatString4.FormatNumber(point.Value, Formatting.VALUE_DECIMAL_PLACES);
+                    break;
+                case 2:
+                    e.Value = FloatString4.FormatNumber(point.InTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
+                    break;
+                case 3:
+                    e.Value = FloatString4.FormatNumber(point.OutTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
+                    break;
+            }
 
             e.FormattingApplied = true;
         }
-        private void DataPointEditor_DataError(object sender, DataGridViewDataErrorEventArgs e)
+
+        private void DataPointEditor_DataError(object? sender, DataGridViewDataErrorEventArgs e)
         {
-            e.ThrowException = false; // Suppress dialog
-            e.Cancel = false;         // Allow navigation
+            if (e == null) return;
+            e.ThrowException = false;
+            e.Cancel = false;
         }
 
         /// <summary>Attaches event handlers to all UI controls.</summary>
@@ -171,6 +205,19 @@ namespace KSPCurveBuilder
             buttonAddNode.Click += ButtonAddNode_Click;
             checkBoxSort.CheckedChanged += CheckBoxSort_CheckedChanged;
 
+            // Undo/Redo
+            buttonUndo.Click += (s, e) =>
+            {
+                if (undoManager != null)
+                    ApplyTextToCurve(undoManager.Undo());
+            };
+
+            buttonRedo.Click += (s, e) =>
+            {
+                if (undoManager != null)
+                    ApplyTextToCurve(undoManager.Redo());
+            };
+
             // DataGridView events
             dataPointEditor.CellValueChanged += DataPointEditor_CellValueChanged;
             dataPointEditor.CellClick += DataPointEditor_CellClick;
@@ -178,9 +225,12 @@ namespace KSPCurveBuilder
             dataPointEditor.CellFormatting += DataPointEditor_CellFormatting;
             dataPointEditor.DataError += DataPointEditor_DataError;
 
-            // PictureBox events
-            curveView.Paint += CurveView_Paint;
-            curveView.Resize += CurveView_Resize;
+
+            if (curveView != null)
+            {
+                curveView.Paint += CurveView_Paint;
+                curveView.Resize += CurveView_Resize;
+            }
 
             // TextBox events
             curveText.TextChanged += CurveText_TextChanged;
@@ -196,45 +246,49 @@ namespace KSPCurveBuilder
             dataPointEditor.CellMouseEnter += DataPointEditor_CellMouseEnter;
             dataPointEditor.CellMouseLeave += DataPointEditor_CellMouseLeave;
 
-            // Add Pan/Zoom mouse event handlers
-            curveView.MouseWheel += CurveView_MouseWheel;
-            curveView.MouseDown += CurveView_MouseDown;
-            curveView.MouseMove += CurveView_MouseMove;
-            curveView.MouseUp += CurveView_MouseUp;
-            curveView.TabStop = true;
-            curveView.MouseClick += CurveView_MouseClick;
-            //curveView.MouseEnter += (s, e) => curveView.Focus(); // Required for wheel events
+
+            if (curveView != null)
+            {
+                curveView.MouseWheel += CurveView_MouseWheel;
+                curveView.MouseDown += CurveView_MouseDown;
+                curveView.MouseMove += CurveView_MouseMove;
+                curveView.MouseUp += CurveView_MouseUp;
+                curveView.TabStop = true;
+                curveView.MouseClick += CurveView_MouseClick;
+            }
 
             // Preset element events
-            presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
-            buttonSavePreset.Click += buttonSavePreset_Click;
-            buttonDeletePreset.Click += ButtonDeletePreset_Click;
+            if (presetDropdown != null)
+                presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+            if (buttonSavePreset != null)
+                buttonSavePreset.Click += buttonSavePreset_Click;
+            if (buttonDeletePreset != null)
+                buttonDeletePreset.Click += ButtonDeletePreset_Click;
+            if (buttonResetZoom != null)
+                buttonResetZoom.Click += buttonResetZoom_Click;
         }
 
         #region Button Event Handlers
 
-        private void ButtonNewCurve_Click(object sender, EventArgs e)
+        private void ButtonNewCurve_Click(object? sender, EventArgs e)
         {
-            points.Clear();
-            pointsBindingList.ResetBindings();
-            UpdateAll();
+            points?.Clear();
+            pointsBindingList?.ResetBindings();
+            SyncPointsToTextbox("New Curve");
         }
 
-        private void ButtonSmooth_Click(object sender, EventArgs e)
+        private void ButtonSmooth_Click(object? sender, EventArgs e)
         {
-            // Rebuild curve from current points
             var curve = CreateCurveFromPoints();
-            curve.SmoothTangents();
+            curve?.SmoothTangents();
             UpdatePointsFromCurve(curve);
-
-            // Refresh UI
-            pointsBindingList.ResetBindings();
-            UpdateAll();
+            pointsBindingList?.ResetBindings();
+            SyncPointsToTextbox("Smooth Tangents");
         }
 
-        private void ButtonCopy_Click(object sender, EventArgs e)
+        private void ButtonCopy_Click(object? sender, EventArgs e)
         {
-            if (curveText.Text.Length > 0)
+            if (!string.IsNullOrEmpty(curveText?.Text))
             {
                 Clipboard.SetText(curveText.Text);
                 MessageBox.Show("Curve data copied to clipboard!", "Copy",
@@ -242,7 +296,7 @@ namespace KSPCurveBuilder
             }
         }
 
-        private void ButtonPaste_Click(object sender, EventArgs e)
+        private void ButtonPaste_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -271,7 +325,7 @@ namespace KSPCurveBuilder
                         var parseResult = FloatString4.TryParseKeyString(trimmedLine);
                         if (parseResult.Success)
                         {
-                            validPoints.Add(parseResult.Point);
+                            validPoints.Add(parseResult.Point!);
                         }
                         else
                         {
@@ -313,15 +367,19 @@ namespace KSPCurveBuilder
                     }
                 }
 
-                points.Clear();
-                points.AddRange(validPoints);
+                // Null check before clearing/adding
+                if (points != null && validPoints != null)
+                {
+                    points.Clear();
+                    points.AddRange(validPoints);
+                }
 
-                if (checkBoxSort.Checked)
-                    points.Sort();
+                if (checkBoxSort?.Checked == true)
+                    points?.Sort();
 
-                pointsBindingList.ResetBindings();
+                pointsBindingList?.ResetBindings();
                 ResetZoom();
-                UpdateAll();
+                SyncPointsToTextbox("Paste");
             }
             catch (Exception ex)
             {
@@ -329,17 +387,17 @@ namespace KSPCurveBuilder
             }
         }
 
-        private void ButtonAddNode_Click(object sender, EventArgs e)
+        private void ButtonAddNode_Click(object? sender, EventArgs e)
         {
+            if (points == null) return;
+
             if (points.Count > 0)
             {
-                // Add a new point after the last one
                 var lastPoint = points.Last();
                 var newPoint = new FloatString4(
-                    lastPoint.Time + 10,  // Default: +10 time
-                    lastPoint.Value,      // Same value
-                    0, 0);                // Zero tangents
-
+                    lastPoint.Time + 10,
+                    lastPoint.Value,
+                    0, 0);
                 points.Add(newPoint);
             }
             else
@@ -347,22 +405,19 @@ namespace KSPCurveBuilder
                 points.Add(new FloatString4(0, 0, 0, 0));
             }
 
-            if (checkBoxSort.Checked)
+            if (checkBoxSort?.Checked == true)
                 points.Sort();
 
-            pointsBindingList.ResetBindings();
+            pointsBindingList?.ResetBindings();
             UpdateAll();
+            SyncPointsToTextbox("Add Node");
         }
-        /// <summary>
-        /// Saves the current curve as a user preset. The preset name is taken from the
-        /// preset name textbox and sanitized for filesystem safety. Built-in presets cannot
-        /// be overwritten. After saving, the dropdown is refreshed and the new preset is
-        /// automatically selected.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">Event data.</param>
-        private void buttonSavePreset_Click(object sender, EventArgs e)
+
+        private void buttonSavePreset_Click(object? sender, EventArgs e)
         {
+            // <-- ADDED: Null check
+            if (presetNameTextbox == null) return;
+
             string name = presetNameTextbox.Text.Trim();
 
             // Sanitize filename (remove invalid chars)
@@ -374,18 +429,16 @@ namespace KSPCurveBuilder
                 return;
             }
 
-            // Check if preset exists (either built-in or user-saved)
-            bool exists = false;
-
-            // Check built-in presets
-            if (BuiltInPresets.GetAll().Any(p => p.Name == name))
+            // Check if preset exists
+            var builtIns = BuiltInPresets.GetAll();
+            if (builtIns != null && builtIns.Any(p => p.Name == name))
             {
                 MessageBox.Show($"Cannot overwrite built-in preset '{name}'. Please choose a different name.");
                 return;
             }
 
-            // Check user presets
-            exists = PresetManager.GetAvailablePresets().Contains(name);
+            var userPresets = PresetManager.GetAvailablePresets();
+            bool exists = userPresets?.Contains(name) ?? false;
 
             if (exists)
             {
@@ -396,64 +449,53 @@ namespace KSPCurveBuilder
             }
 
             // Save it
-            var preset = Preset.FromPoints(name, "User-created preset", points);
+            var preset = Preset.FromPoints(name, "User-created preset", points ?? new List<FloatString4>());
             PresetManager.SavePreset(preset);
 
             // Refresh dropdown
             LoadPresetsIntoDropdown();
 
             // Select the saved preset
-            foreach (Preset item in presetDropdown.Items)
+            if (presetDropdown?.Items != null)
             {
-                if (item.Name == name)
+                foreach (Preset item in presetDropdown.Items)
                 {
-                    presetDropdown.SelectedItem = item;
-                    break;
+                    if (item.Name == name)
+                    {
+                        presetDropdown.SelectedItem = item;
+                        break;
+                    }
                 }
             }
         }
-        /// <summary>
-        /// Handles selection changes in the preset dropdown. When a preset is selected,
-        /// this method updates the preset name textbox, loads the corresponding curve points
-        /// into the editor, and refreshes the UI. Built-in and user presets are loaded
-        /// differently but both result in <see cref="Preset"/> objects being processed.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">Event data.</param>
-        private void PresetDropdown_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (presetDropdown.SelectedItem == null) return;
 
-            // Get the selected Preset object
+        private void PresetDropdown_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+
+            if (presetDropdown == null || presetDropdown.SelectedItem == null) return;
+            if (points == null || pointsBindingList == null) return;
+
             var selectedPreset = presetDropdown.SelectedItem as Preset;
             if (selectedPreset == null) return;
 
-            // Update the preset name textbox with the Preset's Name property
             presetNameTextbox.Text = selectedPreset.Name;
-
-            // Load into editor
             points.Clear();
             points.AddRange(selectedPreset.Points);
             pointsBindingList.ResetBindings();
             UpdateAll();
+            SyncPointsToTextbox($"Load Preset: {selectedPreset.Name}");
         }
-        /// <summary>
-        /// Deletes a user preset after confirmation. Built-in presets are protected from deletion.
-        /// After successful deletion, the dropdown is refreshed and the default preset (index 0)
-        /// is automatically selected to maintain a valid UI state.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">Event data.</param>
-        private void ButtonDeletePreset_Click(object sender, EventArgs e)
-        {
-            if (presetDropdown.SelectedItem == null) return;
 
-            // Get the selected Preset object
+        private void ButtonDeletePreset_Click(object? sender, EventArgs e)
+        {
+            if (presetDropdown?.SelectedItem == null) return;
+
             var selectedPreset = presetDropdown.SelectedItem as Preset;
             if (selectedPreset == null) return;
 
             // Don't delete built-in presets
-            if (BuiltInPresets.GetAll().Any(p => p.Name == selectedPreset.Name))
+            var builtIns = BuiltInPresets.GetAll();
+            if (builtIns != null && builtIns.Any(p => p.Name == selectedPreset.Name))
             {
                 MessageBox.Show("Cannot delete built-in presets.");
                 return;
@@ -470,44 +512,44 @@ namespace KSPCurveBuilder
                 {
                     presetDropdown.SelectedIndex = 0;
                 }
-                else
+                else if (presetNameTextbox != null)
                 {
-                    // If no presets left, clear the textbox
                     presetNameTextbox.Text = "";
                 }
             }
         }
-        /// <summary>
-        /// Populates the preset dropdown with both built-in and user-defined presets.
-        /// Built-in presets are loaded from <see cref="BuiltInPresets"/>, while user presets
-        /// are loaded from disk via <see cref="PresetManager"/>. Each item in the dropdown
-        /// is stored as a <see cref="Preset"/> object with DisplayMember set to show the Name.
-        /// </summary>
+
         private void LoadPresetsIntoDropdown()
         {
+            // <-- ADDED: Null check
             if (presetDropdown == null) return;
 
             presetDropdown.Items.Clear();
 
-            // Load built-in presets as Preset objects
+            // Load built-in presets
             var builtIns = BuiltInPresets.GetAll();
-            foreach (var preset in builtIns)
+            if (builtIns != null)
             {
-                presetDropdown.Items.Add(preset);
-            }
-
-            // Load user presets as Preset objects
-            var userPresetNames = PresetManager.GetAvailablePresets();
-            foreach (var name in userPresetNames)
-            {
-                var userPreset = PresetManager.LoadPreset(name);
-                if (userPreset != null)
+                foreach (var preset in builtIns)
                 {
-                    presetDropdown.Items.Add(userPreset);
+                    presetDropdown.Items.Add(preset);
                 }
             }
 
-            // Set DisplayMember to show the name
+            // Load user presets
+            var userPresetNames = PresetManager.GetAvailablePresets();
+            if (userPresetNames != null)
+            {
+                foreach (var name in userPresetNames)
+                {
+                    var userPreset = PresetManager.LoadPreset(name);
+                    if (userPreset != null)
+                    {
+                        presetDropdown.Items.Add(userPreset);
+                    }
+                }
+            }
+
             presetDropdown.DisplayMember = "Name";
         }
 
@@ -516,20 +558,22 @@ namespace KSPCurveBuilder
             zoomLevel = 1.0f;
             panCenter = new PointF(0.5f, 0.5f);
             UpdateGraphBounds();
-            curveView.Invalidate();
+            curveView?.Invalidate();
         }
-        private void buttonResetZoom_Click(object sender, EventArgs e)
+
+        private void buttonResetZoom_Click(object? sender, EventArgs e)
         {
             ResetZoom();
         }
 
-        private void CheckBoxSort_CheckedChanged(object sender, EventArgs e)
+        private void CheckBoxSort_CheckedChanged(object? sender, EventArgs e)
         {
-            if (checkBoxSort.Checked)
+            if (checkBoxSort?.Checked == true && points != null)
             {
                 points.Sort();
-                pointsBindingList.ResetBindings();
+                pointsBindingList?.ResetBindings();
                 UpdateAll();
+                SyncPointsToTextbox("Sort");
             }
         }
 
@@ -537,14 +581,14 @@ namespace KSPCurveBuilder
 
         #region DataGridView Event Handlers
 
-        private void DataPointEditor_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        private void DataPointEditor_CellValueChanged(object? sender, DataGridViewCellEventArgs e)
         {
-            if (ignoreDataGridViewChanges || e.RowIndex < 0 || e.ColumnIndex < 0)
-                return;
+            if (ignoreDataGridViewChanges || e?.RowIndex < 0 || e?.ColumnIndex < 0) return;
+            if (points == null || points.Count <= e.RowIndex) return;
+            if (dataPointEditor?.Rows[e.RowIndex]?.Cells[e.ColumnIndex]?.Value == null) return;
 
-            var point = points[e.RowIndex];
+            var oldPoint = points[e.RowIndex];
             object cellValue = dataPointEditor.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
-            if (cellValue == null) return;
 
             if (!float.TryParse(cellValue.ToString(), out float parsedValue))
             {
@@ -554,62 +598,71 @@ namespace KSPCurveBuilder
 
             dataPointEditor.Rows[e.RowIndex].ErrorText = "";
 
-            bool timeChanged = false;
+            // Create new immutable point with changed value
+            FloatString4 newPoint;
             switch ((DataGridColumn)e.ColumnIndex)
             {
                 case DataGridColumn.Time:
-                    point.Time = parsedValue;
-                    timeChanged = true;
+                    newPoint = oldPoint.WithTime(parsedValue);
                     break;
                 case DataGridColumn.Value:
-                    point.Value = parsedValue;
+                    newPoint = oldPoint.WithValue(parsedValue);
                     break;
                 case DataGridColumn.InTangent:
-                    point.InTangent = parsedValue;
+                    newPoint = oldPoint.WithTangents(parsedValue, oldPoint.OutTangent);
                     break;
                 case DataGridColumn.OutTangent:
-                    point.OutTangent = parsedValue;
+                    newPoint = oldPoint.WithTangents(oldPoint.InTangent, parsedValue);
                     break;
+                default:
+                    return;
             }
 
-            // Only sort if Time column changed
-            if (checkBoxSort.Checked && timeChanged)
+            // Replace the point in the list
+            points[e.RowIndex] = newPoint;
+
+            if (checkBoxSort?.Checked == true && e.ColumnIndex == (int)DataGridColumn.Time)
                 points.Sort();
 
-            pointsBindingList.ResetBindings();
+            pointsBindingList?.ResetBindings();
             UpdateAll();
+            SyncPointsToTextbox("Edit Value");
         }
 
-        private void DataPointEditor_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void DataPointEditor_CellClick(object? sender, DataGridViewCellEventArgs e)
         {
-            if (e.ColumnIndex == (int)DataGridColumn.RemoveButton && e.RowIndex >= 0)
+            // <-- ADDED: Null checks
+            if (e?.RowIndex < 0 || points == null || points.Count <= e.RowIndex) return;
+
+            if (e.ColumnIndex == (int)DataGridColumn.RemoveButton)
             {
                 if (MessageBox.Show("Delete this point?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     points.RemoveAt(e.RowIndex);
-                    pointsBindingList.ResetBindings();
+                    pointsBindingList?.ResetBindings();
                     UpdateAll();
                 }
             }
         }
 
-        private void DataPointEditor_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        private void DataPointEditor_CellValidating(object? sender, DataGridViewCellValidatingEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0 || e.ColumnIndex > 3) return;
+            // <-- ADDED: Null and bounds checks
+            if (e?.RowIndex < 0 || e?.ColumnIndex < 0 || e.ColumnIndex > 3) return;
+            if (points == null || points.Count <= e.RowIndex) return;
 
-            if (!float.TryParse(e.FormattedValue.ToString(), out _))
+            if (!float.TryParse(e.FormattedValue?.ToString() ?? "", out _))
             {
                 // Revert to original value
                 var point = points[e.RowIndex];
-                float originalValue;
-                switch (e.ColumnIndex)
+                float originalValue = e.ColumnIndex switch
                 {
-                    case 0: originalValue = point.Time; break;
-                    case 1: originalValue = point.Value; break;
-                    case 2: originalValue = point.InTangent; break;
-                    case 3: originalValue = point.OutTangent; break;
-                    default: originalValue = 0f; break;
-                }
+                    0 => point.Time,
+                    1 => point.Value,
+                    2 => point.InTangent,
+                    3 => point.OutTangent,
+                    _ => 0f
+                };
 
                 dataPointEditor.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = originalValue;
                 dataPointEditor.Rows[e.RowIndex].Cells[e.ColumnIndex].ErrorText = "";
@@ -626,57 +679,63 @@ namespace KSPCurveBuilder
 
         #region PictureBox Event Handlers
 
-        private void CurveView_Paint(object sender, PaintEventArgs e)
+        private void CurveView_Paint(object? sender, PaintEventArgs e)
         {
+            if (e?.Graphics == null || points == null || curveView == null) return;
             if (points.Count == 0) return;
+
             var curve = CreateCurveFromPoints();
+            if (curve == null) return;
 
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             e.Graphics.Clear(Color.Black);
 
-            var renderer = new CurveRenderer(e.Graphics, points, curve,
+            // Cache dimensions to avoid repeated null checks
+            int width = curveView.Width;
+            int height = curveView.Height;
+
+            using (var renderer = new CurveRenderer(e.Graphics, points, curve,
                 graphMinTime, graphMaxTime, graphMinValue, graphMaxValue,
-                curveView.Width, curveView.Height, zoomLevel, draggedPointIndex, hoveredPointIndex);
-            renderer.Render();
+                width, height, zoomLevel, draggedPointIndex, hoveredPointIndex))
+            {
+                renderer.Render();
+            }
         }
 
-        private void CurveView_Resize(object sender, EventArgs e)
+        private void CurveView_Resize(object? sender, EventArgs e)
         {
-            curveView.Invalidate(); // Redraw on resize
+            curveView?.Invalidate(); // Redraw on resize
         }
-        /// <summary>
-        /// Handles right-click on the curve view to add a new keyframe at the clicked (time, value) position.
-        /// The new point is added with zero tangents and the UI is updated immediately.
-        /// </summary>
-        private void CurveView_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Right) return;
 
-            // Convert screen coordinates to graph coordinates
+        private void CurveView_MouseClick(object? sender, MouseEventArgs e)
+        {
+            if (e?.Button != MouseButtons.Right || points == null || curveView == null) return;
+
+            // Add bounds check to ensure coordinates are valid
+            if (e.X < 0 || e.Y < 0 || e.X > curveView.Width || e.Y > curveView.Height) return;
+
             float time = graphMinTime + (e.X / (float)curveView.Width) * (graphMaxTime - graphMinTime);
             float value = graphMaxValue - (e.Y / (float)curveView.Height) * (graphMaxValue - graphMinValue);
 
-            // Create and add new point with zero tangents
             var newPoint = new FloatString4(time, value, 0f, 0f);
             points.Add(newPoint);
 
-            // Sort if enabled
-            if (checkBoxSort.Checked)
+            if (checkBoxSort?.Checked == true)
                 points.Sort();
 
-            // Update UI
-            pointsBindingList.ResetBindings();
+            pointsBindingList?.ResetBindings();
             UpdateAll();
+            SyncPointsToTextbox("Add Point");
         }
 
         #endregion
 
         #region TextBox Event Handlers
 
-        private void CurveText_TextChanged(object sender, EventArgs e)
+        private void CurveText_TextChanged(object? sender, EventArgs e)
         {
             // Optional: Parse text box changes in real-time
-            // Could add a "Apply Text" button instead
+            // Add a "Apply Text" button instead
         }
 
         #endregion
@@ -685,35 +744,43 @@ namespace KSPCurveBuilder
         /// <summary>Rebuilds curve, updates graph bounds, refreshes textbox and render.</summary>
         private void UpdateAll()
         {
-            var curve = CreateCurveFromPoints(); // Use local curve
+            var curve = CreateCurveFromPoints();
             UpdateGraphBounds();
-            UpdateTextBox();
-            curveView.Invalidate();
+            curveView?.Invalidate();
         }
 
-        private FloatCurveStandalone CreateCurveFromPoints()
+        private FloatCurveStandalone? CreateCurveFromPoints()
         {
+            if (points == null) return null;
+
             var curve = new FloatCurveStandalone();
-            foreach (var point in points) curve.Add(point.Time, point.Value, point.InTangent, point.OutTangent);
+            foreach (var point in points)
+            {
+                if (point != null)
+                    curve.Add(point.Time, point.Value, point.InTangent, point.OutTangent);
+            }
             return curve;
         }
 
-        private void UpdatePointsFromCurve(FloatCurveStandalone curve)
+        private void UpdatePointsFromCurve(FloatCurveStandalone? curve)
         {
-            points.Clear();
-            if (curve != null && curve.Curve.keys.Length > 0)
+            points?.Clear();
+            if (curve?.Curve?.keys != null && curve.Curve.keys.Length > 0)
             {
                 foreach (var key in curve.Curve.keys)
                 {
-                    points.Add(new FloatString4(key));
+                    if (key != null)
+                        points.Add(new FloatString4(key));
                 }
             }
-            if (checkBoxSort.Checked) points.Sort();
+            if (checkBoxSort?.Checked == true)
+                points?.Sort();
         }
 
         private void UpdateGraphBounds()
         {
-            if (points.Count == 0)
+            // Handle empty points list
+            if (points == null || points.Count == 0)
             {
                 graphMinTime = -50 / zoomLevel;
                 graphMaxTime = 150 / zoomLevel;
@@ -730,10 +797,11 @@ namespace KSPCurveBuilder
                 return;
             }
 
-            float minTime = points.Min(p => p.Time);
-            float maxTime = points.Max(p => p.Time);
-            float minValue = points.Min(p => p.Value);
-            float maxValue = points.Max(p => p.Value);
+            // Safely calculate min/max with null checks
+            float minTime = points.Min(p => p?.Time ?? 0f);
+            float maxTime = points.Max(p => p?.Time ?? 0f);
+            float minValue = points.Min(p => p?.Value ?? 0f);
+            float maxValue = points.Max(p => p?.Value ?? 0f);
 
             float timePadding = (maxTime - minTime) * 0.1f;
             float valuePadding = (maxValue - minValue) * 0.1f;
@@ -753,36 +821,21 @@ namespace KSPCurveBuilder
             graphMaxValue = centerY + dataHeight / 2;
         }
 
-        private void UpdateTextBox()
-        {
-            ignoreDataGridViewChanges = true;
-            try
-            {
-                curveText.Text = string.Join(Environment.NewLine, points.Select(p => p.ToKeyString("key")));
-            }
-            finally
-            {
-                ignoreDataGridViewChanges = false;
-            }
-        }
-
         #endregion
 
         #region Utility Methods
 
         // Mouse interaction for dragging on cells to change values
         #region MouseDragControls
-        private void DataPointEditor_MouseDown(object sender, MouseEventArgs e)
+        private void DataPointEditor_MouseDown(object? sender, MouseEventArgs e)
         {
-            if (e.Button != MouseButtons.Left) return;
+            // <-- ADDED: Null checks
+            if (e?.Button != MouseButtons.Left || dataPointEditor == null || points == null) return;
             if (dataPointEditor.IsCurrentCellInEditMode)
             {
                 dataPointEditor.EndEdit();
                 return;
             }
-
-            // Don't start drag if cell has validation errors
-            if (dataPointEditor.IsCurrentCellInEditMode) return;
 
             var hit = dataPointEditor.HitTest(e.X, e.Y);
             if (hit.Type == DataGridViewHitTestType.Cell &&
@@ -795,141 +848,154 @@ namespace KSPCurveBuilder
                 dragStartPos = e.Location;
 
                 dataPointEditor.ClearSelection();
-                // DO NOT SET CurrentCell = null - causes InvalidOperationException
                 dataPointEditor.Capture = true;
                 dataPointEditor.Cursor = Cursors.HSplit;
             }
         }
-        /// <summary>
-        /// Handles mouse drag operations to adjust curve point values in real-time.
-        /// Dragging vertically modifies the value based on mouse movement delta and current drag rate.
-        /// Holding Shift increases drag speed 5x; holding Ctrl reduces speed to 0.1x for fine-tuning.
-        /// Updates the affected cell and curve visualization during drag for immediate feedback.
-        /// </summary>
-        private void DataPointEditor_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (!isDragging || dragRowIndex < 0) return;
 
-            // DRAG CURVE FUNCTION
+        private void DataPointEditor_MouseMove(object? sender, MouseEventArgs e)
+        {
+            if (!isDragging || dragRowIndex < 0 || points == null || dataPointEditor == null) return;
+
+            // Handle screen edge wrapping
+            Point screenPos = dataPointEditor.PointToScreen(e.Location);
+            Rectangle screenBounds = Screen.FromControl(dataPointEditor).Bounds;
+            if (WarpCursorAtScreenEdges(screenPos, screenBounds))
+            {
+                dragStartPos = dataPointEditor.PointToClient(Cursor.Position);
+                return;
+            }
+
+            // Get current value
+            var point = points[dragRowIndex];
+            float currentValue = dragColumnIndex switch
+            {
+                0 => point.Time,
+                1 => point.Value,
+                2 => point.InTangent,
+                3 => point.OutTangent,
+                _ => 0f
+            };
+
+            // Calculate change
+            float mouseDelta = dragStartPos.Y - e.Y;
+            float valueChange = CalculateDragValueChange(currentValue, mouseDelta, dragColumnIndex);
+            float newValue = ClampDragValue(currentValue + valueChange, dragColumnIndex);
+
+            // Update
+            UpdatePointFromDrag(dragRowIndex, dragColumnIndex, newValue);
+            dataPointEditor.InvalidateCell(dragColumnIndex, dragRowIndex);
+            UpdateGraphBounds();
+            curveView?.Invalidate();
+
+            dragStartPos = e.Location;
+        }
+
+        private bool WarpCursorAtScreenEdges(Point screenPos, Rectangle screenBounds)
+        {
+            if (screenPos.Y <= screenBounds.Top + Constants.DRAG_EDGE_THRESHOLD)
+            {
+                Cursor.Position = new Point(screenPos.X, screenBounds.Bottom - Constants.DRAG_WARP_DISTANCE);
+                return true;
+            }
+            if (screenPos.Y >= screenBounds.Bottom - Constants.DRAG_EDGE_THRESHOLD)
+            {
+                Cursor.Position = new Point(screenPos.X, screenBounds.Top + Constants.DRAG_WARP_DISTANCE);
+                return true;
+            }
+            return false;
+        }
+
+        private float CalculateDragValueChange(float baseValue, float mouseDeltaY, int columnIndex)
+        {
             Func<float, float> getDragRate = (v) =>
                 v < 0.001f ? Constants.DRAG_MIN_RATE : v / (v + Constants.DRAG_REFERENCE) * Constants.MAX_RATE_MULTIPLIER;
 
-            // Calculate change from LIVE value (not corrupted baseline)
-            var point = points[dragRowIndex];
-            float currentValue;
-            switch (dragColumnIndex)
-            {
-                case 0: currentValue = point.Time; break;
-                case 1: currentValue = point.Value; break;
-                case 2: currentValue = point.InTangent; break;
-                case 3: currentValue = point.OutTangent; break;
-                default: currentValue = 0f; break;
-            }
-
-            float mouseDelta = dragStartPos.Y - e.Y;
-            float columnMult = (dragColumnIndex == (int)DataGridColumn.InTangent ||
-                                dragColumnIndex == (int)DataGridColumn.OutTangent) ?
+            float columnMult = (columnIndex == (int)DataGridColumn.InTangent ||
+                                columnIndex == (int)DataGridColumn.OutTangent) ?
                                 Constants.TANGENT_MULTIPLIER : 1.0f;
 
-            // Apply modifier key speed adjustments
             float speedMultiplier = GetDragSpeedMultiplier();
-            float rawChange = mouseDelta * Constants.DRAG_SENSITIVITY * columnMult * speedMultiplier;
+            float rawChange = mouseDeltaY * Constants.DRAG_SENSITIVITY * columnMult * speedMultiplier;
+            float currentRate = getDragRate(Math.Abs(baseValue));
 
-            float currentRate = getDragRate(Math.Abs(currentValue));
-            float valueChange = rawChange * currentRate;
-            float newValue = currentValue + valueChange;
-            newValue = ClampDragValue(newValue, dragColumnIndex);
-
-            dragStartPos = e.Location;
-
-            // Update point
-            switch (dragColumnIndex)
-            {
-                case (int)DataGridColumn.Time:
-                    point.Time = newValue;
-                    if (checkBoxSort.Checked)
-                    {
-                        points.Sort();
-                        pointsBindingList.ResetBindings();
-                    }
-                    break;
-                case (int)DataGridColumn.Value:
-                    point.Value = newValue;
-                    break;
-                case (int)DataGridColumn.InTangent:
-                    point.InTangent = newValue;
-                    break;
-                case (int)DataGridColumn.OutTangent:
-                    point.OutTangent = newValue;
-                    break;
-            }
-
-            dataPointEditor.InvalidateCell(dragColumnIndex, dragRowIndex);
-
-            // LIGHTWEIGHT update: only what drag needs
-            UpdateGraphBounds();
-            curveView.Invalidate();
+            return rawChange * currentRate;
         }
 
-
-
-        private void DataPointEditor_MouseUp(object sender, MouseEventArgs e)
+        private void UpdatePointFromDrag(int rowIndex, int columnIndex, float newValue)
         {
-            if (isDragging)
+            if (points == null || rowIndex < 0 || rowIndex >= points.Count) return;
+
+            var oldPoint = points[rowIndex];
+            FloatString4 newPoint;
+
+            switch (columnIndex)
+            {
+                case (int)DataGridColumn.Time:
+                    newPoint = oldPoint.WithTime(newValue);
+                    break;
+                case (int)DataGridColumn.Value:
+                    newPoint = oldPoint.WithValue(newValue);
+                    break;
+                case (int)DataGridColumn.InTangent:
+                    newPoint = oldPoint.WithTangents(newValue, oldPoint.OutTangent);
+                    break;
+                case (int)DataGridColumn.OutTangent:
+                    newPoint = oldPoint.WithTangents(oldPoint.InTangent, newValue);
+                    break;
+                default:
+                    return;
+            }
+
+            points[rowIndex] = newPoint;
+
+            if (checkBoxSort?.Checked == true && columnIndex == (int)DataGridColumn.Time)
+            {
+                points.Sort();
+                pointsBindingList?.ResetBindings();
+            }
+        }
+
+        private void DataPointEditor_MouseUp(object? sender, MouseEventArgs e)
+        {
+            if (isDragging && dataPointEditor != null)
             {
                 isDragging = false;
                 dragRowIndex = -1;
                 dataPointEditor.Capture = false;
                 dataPointEditor.Cursor = Cursors.Default;
-
-                // Sync textbox with final state
-                UpdateTextBox();
-                curveView.Invalidate(); // Redraw one final time
+                SyncPointsToTextbox("Drag Adjustment");
             }
         }
 
-        private void DataPointEditor_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
+        private void DataPointEditor_CellMouseEnter(object? sender, DataGridViewCellEventArgs e)
         {
-            if (e.ColumnIndex >= 0 && e.ColumnIndex <= 3 && e.RowIndex >= 0 && !isDragging)
+            if (dataPointEditor != null && e.ColumnIndex >= 0 && e.ColumnIndex <= 3 &&
+                e.RowIndex >= 0 && !isDragging)
             {
-                dataPointEditor.Cursor = Cursors.HSplit; // Show drag cursor on hover
+                dataPointEditor.Cursor = Cursors.HSplit;
             }
         }
 
-        private void DataPointEditor_CellMouseLeave(object sender, DataGridViewCellEventArgs e)
+        private void DataPointEditor_CellMouseLeave(object? sender, DataGridViewCellEventArgs e)
         {
-            if (!isDragging)
+            if (dataPointEditor != null && !isDragging)
             {
                 dataPointEditor.Cursor = Cursors.Default;
             }
         }
 
-        private void DataPointEditor_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            // Reset drag state after editing
-            isDragging = false;
-            dragRowIndex = -1;
-        }
-
         private float ClampDragValue(float value, int columnIndex)
         {
-            switch (columnIndex)
+            return columnIndex switch
             {
-                case 0: // Time
-                    return Math.Max(0f, Math.Min(value, 1e6f));
-                case 1: // Value
-                    return Math.Max(-1e6f, Math.Min(value, 1e6f));
-                case 2: // InTangent
-                case 3: // OutTangent
-                    return Math.Max(-1e4f, Math.Min(value, 1e4f));
-                default:
-                    return value;
-            }
+                0 => Math.Max(0f, Math.Min(value, 1e6f)), // Time
+                1 => Math.Max(-1e6f, Math.Min(value, 1e6f)), // Value
+                2 or 3 => Math.Max(-1e4f, Math.Min(value, 1e4f)), // Tangent
+                _ => value
+            };
         }
-        /// <summary>
-        /// Gets the drag speed multiplier based on modifier keys.
-        /// Shift = 5x speed, Ctrl = 0.1x speed (fine-tune), none = 1x speed.
-        /// </summary>
+
         private float GetDragSpeedMultiplier()
         {
             if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
@@ -938,13 +1004,65 @@ namespace KSPCurveBuilder
                 return 0.1f;
             return 1.0f;
         }
+
+        private void SyncPointsToTextbox(string actionName)
+        {
+            if (points == null || curveText == null) return;
+
+            string newText = string.Join(Environment.NewLine, points.Select(p => p.ToKeyString("key")));
+
+            if (undoManager is null)
+            {
+                curveText.Text = newText;
+                return;
+            }
+
+            undoManager.RecordAction(newText, actionName);
+            curveText.Text = newText;
+            pointsBindingList?.ResetBindings();
+            UpdateGraphBounds();
+            curveView?.Invalidate();
+            UpdateUndoRedoButtons();
+        }
+
+        private void ApplyTextToCurve(string? text)
+        {
+            if (string.IsNullOrEmpty(text) || points == null || curveText == null) return;
+
+            curveText.Text = text;
+
+            // Parse text back into points
+            points.Clear();
+            foreach (string line in text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string trimmedLine = line.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedLine)) continue;
+
+                var result = FloatString4.TryParseKeyString(trimmedLine);
+                if (result.Success)
+                {
+                    points.Add(result.Point!);
+                }
+            }
+
+            if (checkBoxSort?.Checked == true)
+                points.Sort();
+
+            pointsBindingList?.ResetBindings();
+            UpdateGraphBounds();
+            curveView?.Invalidate();
+            UpdateUndoRedoButtons();
+        }
         #endregion
 
         // Zoom/pan controls for graph
         #region ZoomPanControls
 
-        private void CurveView_MouseWheel(object sender, MouseEventArgs e)
+        private void CurveView_MouseWheel(object? sender, MouseEventArgs e)
         {
+            // <-- ADDED: Null checks
+            if (curveView == null) return;
+
             curveView.Focus();
             float oldZoom = zoomLevel;
             float zoomFactor = e.Delta > 0 ? 1.1f : 0.9f;
@@ -969,12 +1087,11 @@ namespace KSPCurveBuilder
             }
         }
 
-        /// <summary>
-        /// Handles mouse down on curve view. Left-click on point starts point drag;
-        /// left-click on empty space starts pan; right-click adds point.
-        /// </summary>
-        private void CurveView_MouseDown(object sender, MouseEventArgs e)
+        private void CurveView_MouseDown(object? sender, MouseEventArgs e)
         {
+            // <-- ADDED: Null checks
+            if (e == null || curveView == null) return;
+
             curveView.Focus();
 
             if (e.Button == MouseButtons.Left)
@@ -986,7 +1103,6 @@ namespace KSPCurveBuilder
                     draggedPointIndex = hitIndex;
                     hoveredPointIndex = hitIndex;
                     curveView.Cursor = Cursors.Hand;
-                    // Lock cursor to PictureBox bounds
                     Cursor.Clip = curveView.RectangleToScreen(curveView.ClientRectangle);
                     return;
                 }
@@ -1005,12 +1121,10 @@ namespace KSPCurveBuilder
             }
         }
 
-        /// <summary>
-        /// Handles mouse move for point dragging, panning, and hover label display.
-        /// Updates hover state and triggers redraw for label visibility.
-        /// </summary>
-        private void CurveView_MouseMove(object sender, MouseEventArgs e)
+        private void CurveView_MouseMove(object? sender, MouseEventArgs e)
         {
+            if (e == null || points == null || curveView == null) return;
+
             if (isDraggingPoint && draggedPointIndex >= 0)
             {
                 // Convert mouse position to graph coordinates
@@ -1021,22 +1135,24 @@ namespace KSPCurveBuilder
                 newTime = Math.Max(0f, Math.Min(newTime, Constants.MAX_REASONABLE_VALUE));
                 newValue = Math.Max(-Constants.MAX_REASONABLE_VALUE, Math.Min(newValue, Constants.MAX_REASONABLE_VALUE));
 
-                // Update the point directly
-                var point = points[draggedPointIndex];
-                point.Time = newTime;
-                point.Value = newValue;
-
-                // Sort if needed
-                if (checkBoxSort.Checked)
+                // Get the old point and create a new one with updated values
+                var oldPoint = points[draggedPointIndex];
+                if (oldPoint != null)
                 {
-                    points.Sort();
-                    draggedPointIndex = points.IndexOf(point);
-                    hoveredPointIndex = draggedPointIndex;
-                }
+                    // Create new immutable point with new time and value
+                    var newPoint = oldPoint.WithTime(newTime).WithValue(newValue);
+                    points[draggedPointIndex] = newPoint;
 
-                // Skip UpdateGraphBounds during drag - keep view static!
-                // Just refresh for smooth visual feedback
-                curveView.Refresh();
+                    // Sort if needed
+                    if (checkBoxSort?.Checked == true)
+                    {
+                        points.Sort();
+                        draggedPointIndex = points.IndexOf(newPoint);
+                        hoveredPointIndex = draggedPointIndex;
+                    }
+
+                    curveView.Refresh();
+                }
             }
             else if (isPanning)
             {
@@ -1061,37 +1177,39 @@ namespace KSPCurveBuilder
                 if (newHoveredIndex != hoveredPointIndex)
                 {
                     hoveredPointIndex = newHoveredIndex;
-                    curveView.Invalidate(); // Only invalidate if hover state changed
+                    curveView.Invalidate();
                 }
 
                 curveView.Cursor = (hoveredPointIndex >= 0) ? Cursors.Hand : Cursors.Cross;
             }
         }
 
-
-        /// <summary>
-        /// Ends point dragging or panning when mouse button is released.
-        /// Performs full UI sync to ensure all controls are consistent.
-        /// </summary>
-        private void CurveView_MouseUp(object sender, MouseEventArgs e)
+        private void CurveView_MouseUp(object? sender, MouseEventArgs e)
         {
+            if (e == null) return;
+
             if (isDraggingPoint)
             {
                 isDraggingPoint = false;
                 draggedPointIndex = -1;
-                curveView.Cursor = Cursors.Cross;
+                if (curveView != null)
+                {
+                    curveView.Cursor = Cursors.Cross;
+                }
                 hoveredPointIndex = -1;
-                // Release cursor lock
                 Cursor.Clip = Rectangle.Empty;
 
-                // Now recalculate bounds and sync UI
-                pointsBindingList.ResetBindings();
+                pointsBindingList?.ResetBindings();
                 UpdateAll();
+                SyncPointsToTextbox("Move Point");
             }
             else if (isPanning)
             {
                 isPanning = false;
-                curveView.Cursor = Cursors.Cross;
+                if (curveView != null)
+                {
+                    curveView.Cursor = Cursors.Cross;
+                }
             }
         }
         #endregion
@@ -1105,16 +1223,21 @@ namespace KSPCurveBuilder
         /// </summary>
         private int HitTestPoint(Point mousePos)
         {
+            if (points == null || curveView == null) return -1;
+
             for (int i = 0; i < points.Count; i++)
             {
-                float x = (points[i].Time - graphMinTime) * curveView.Width / (graphMaxTime - graphMinTime);
-                float y = curveView.Height - ((points[i].Value - graphMinValue) * curveView.Height / (graphMaxValue - graphMinValue));
+                var point = points[i];
+                if (point == null) continue;
+
+                float x = (point.Time - graphMinTime) * curveView.Width / (graphMaxTime - graphMinTime);
+                float y = curveView.Height - ((point.Value - graphMinValue) * curveView.Height / (graphMaxValue - graphMinValue));
 
                 float dx = mousePos.X - x;
                 float dy = mousePos.Y - y;
                 float distance = (float)Math.Sqrt(dx * dx + dy * dy);
 
-                if (distance <= 8f) // 8px click radius
+                if (distance <= 8f)
                     return i;
             }
             return -1;
@@ -1122,51 +1245,75 @@ namespace KSPCurveBuilder
 
         #endregion
 
-        #endregion
+        #region UndoRedoHandlers
+        private SimpleUndoManager? undoManager = null;
 
+        private void MenuUndo_Click(object sender, EventArgs e) =>
+            ApplyTextToCurve(undoManager?.Undo() ?? "");
+
+        private void MenuRedo_Click(object sender, EventArgs e) =>
+            ApplyTextToCurve(undoManager?.Redo() ?? "");
+
+        private void UpdateUndoRedoButtons()
+        {
+            if (undoManager == null || buttonUndo == null || buttonRedo == null) return;
+
+            buttonUndo.Enabled = undoManager.CanUndo;
+            buttonUndo.Text = "Undo";
+
+            buttonRedo.Enabled = undoManager.CanRedo;
+            buttonRedo.Text = "Redo";
+        }
+        #endregion
+        #endregion
 
         /// <summary>
         /// Initializes the form after it's displayed. Loads presets into the dropdown,
         /// sets up the default curve, updates the preset name textbox, and ensures the
-        /// default preset is selected in the dropdown. This is the main initialization
-        /// point after the UI is ready.
+        /// default preset is selected in the dropdown.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">Event data.</param>
-        private void Form1_Shown(object sender, EventArgs e)
+        private void Form1_Shown(object? sender, EventArgs e)
         {
-            // Force dropdown population FIRST
+            if (points == null || pointsBindingList == null) return;
+
             LoadPresetsIntoDropdown();
 
-            // Initialize from Default preset (not hardcoded)
             var defaultPreset = BuiltInPresets.Default();
+
             points.Clear();
-            points.AddRange(defaultPreset.Points);
+            if (defaultPreset?.Points != null)
+                points.AddRange(defaultPreset.Points);
+
             pointsBindingList.ResetBindings();
 
-            // Update the textbox with the default preset name
-            presetNameTextbox.Text = defaultPreset.Name;
+            if (presetNameTextbox != null && defaultPreset != null)
+                presetNameTextbox.Text = defaultPreset.Name;
 
-            // Try to select the Default preset in dropdown
-            bool foundDefault = false;
-            foreach (Preset preset in presetDropdown.Items)
+            if (presetDropdown?.Items != null)
             {
-                if (preset.Name == "Default")
+                bool foundDefault = false;
+                foreach (Preset preset in presetDropdown.Items)
                 {
-                    presetDropdown.SelectedItem = preset;
-                    foundDefault = true;
-                    break;
+                    if (preset?.Name == "Default")
+                    {
+                        presetDropdown.SelectedItem = preset;
+                        foundDefault = true;
+                        break;
+                    }
                 }
+
+                if (!foundDefault && presetDropdown.Items.Count > 0)
+                    presetDropdown.SelectedItem = presetDropdown.Items[0];
             }
 
-            // If not found, select first item
-            if (!foundDefault && presetDropdown.Items.Count > 0)
-            {
-                presetDropdown.SelectedItem = presetDropdown.Items[0];
-            }
-
-            // UI update LAST
             UpdateAll();
+
+            if (curveText != null)
+            {
+                undoManager = new SimpleUndoManager(curveText.Text);
+                undoManager.StateChanged += (s, ev) => UpdateUndoRedoButtons();
+                UpdateUndoRedoButtons();
+            }
         }
     }
 }
