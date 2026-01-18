@@ -14,11 +14,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      - name: Get Tag Message
+        id: tag_message
+        shell: pwsh
+        run: |
+          git fetch --tags --force
+          $msg = git for-each-ref ${{ github.ref }} --format='%(contents)'
+          echo "BODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$msg" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore "KSPCurveBuilder.slnx"
@@ -29,8 +41,6 @@ jobs:
       - name: Publish
         shell: pwsh
         run: dotnet publish "KSPCurveBuilder.csproj" -c Release -r win-x64 -p:SelfContained=false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=false -p:DebugType=None -p:DebugSymbols=false -o publish
-
-
 
       - name: Archive publish output
         run: |
@@ -43,8 +53,8 @@ jobs:
         uses: actions/create-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: Automated build and publish for ${{ github.ref_name }}
+          release_name: "KSPCurveBuilder ${{ github.ref_name }}"
+          body: ${{ steps.tag_message.outputs.BODY }}
           draft: false
           prerelease: false
 
