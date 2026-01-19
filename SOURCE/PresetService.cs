@@ -17,43 +17,40 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
+using System.Threading.Tasks;
 
 namespace KSPCurveBuilder;
 
 /// <summary>
-/// Handles preset loading, saving, and deletion.
+/// Handles preset loading, saving, and deletion with async operations.
 /// </summary>
 public class PresetService
 {
-    public Preset[] GetAllPresets()
+    public async Task<Preset[]> GetAllPresetsAsync()
     {
         var builtIns = BuiltInPresets.GetAll() ?? [];
-        var userNames = PresetManager.GetAvailablePresets() ?? [];
-        var userPresets = userNames.Select(PresetManager.LoadPreset)
-                                  .Where(p => p != null)
-                                  .ToArray()!;
+        var userNames = await PresetManager.GetAvailablePresetsAsync();
+        var userPresets = new List<Preset>();
+
+        foreach (var name in userNames)
+        {
+            var preset = await PresetManager.LoadPresetAsync(name);
+            if (preset != null) userPresets.Add(preset);
+        }
 
         return builtIns.Union(userPresets).ToArray();
     }
 
-    public void SavePreset(string name, string description, List<FloatString4> points)
+    public async Task SavePresetAsync(string name, string description, List<FloatString4> points)
     {
-        // Sanitize filename
         name = Path.GetInvalidFileNameChars().Aggregate(name, (current, c) => current.Replace(c, '_'));
 
         if (string.IsNullOrWhiteSpace(name))
-        {
-            MessageBox.Show("Enter a valid preset name.");
-            return;
-        }
+            throw new ArgumentException("Enter a valid preset name.", nameof(name));
 
         var builtIns = BuiltInPresets.GetAll();
         if (builtIns != null && builtIns.Any(p => p.Name == name))
-        {
-            MessageBox.Show($"Cannot overwrite built-in preset '{name}'.");
-            return;
-        }
+            throw new InvalidOperationException($"Cannot overwrite built-in preset '{name}'.");
 
         var preset = new Preset
         {
@@ -62,19 +59,17 @@ public class PresetService
             Points = [.. points]
         };
 
-        PresetManager.SavePreset(preset);
+        await PresetManager.SavePresetAsync(preset);
     }
 
-    public void DeletePreset(string presetName)
+    public Task DeletePresetAsync(string presetName)
     {
         var builtIns = BuiltInPresets.GetAll();
         if (builtIns != null && builtIns.Any(p => p.Name == presetName))
-        {
-            MessageBox.Show("Cannot delete built-in presets.");
-            return;
-        }
+            throw new InvalidOperationException("Cannot delete built-in presets.");
 
-        PresetManager.DeletePreset(presetName);
+        PresetManager.DeletePreset(presetName); // Delete is fast, keep sync
+        return Task.CompletedTask;
     }
 
     public Preset? GetDefaultPreset() => BuiltInPresets.Default();

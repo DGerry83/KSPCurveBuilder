@@ -136,7 +136,13 @@ public class CurveEditorService(List<FloatString4> points, BindingList<FloatStri
 
     public void SortByTime()
     {
-        _points.Sort();
+        _points.RemoveAll(p => p is null);
+
+        if (_points.Count > 0)
+        {
+            _points.Sort();
+        }
+
         _bindingList.ResetBindings();
         PointsChanged?.Invoke(this, EventArgs.Empty);
     }

@@ -23,13 +23,15 @@ namespace KSPCurveBuilder;
 /// C# 14: field keyword with explicit constructors (no circular chaining).
 /// </summary>
 [Serializable]
-public sealed record FloatString4
+public sealed record FloatString4 : IComparable<FloatString4>, IComparable
 {
     // C# 14: field keyword creates backing fields automatically
     public float Time { get; init => field = CurveValidator.ValidateFloat(value, nameof(Time)); }
     public float Value { get; init => field = CurveValidator.ValidateFloat(value, nameof(Value)); }
     public float InTangent { get; init => field = CurveValidator.ValidateFloat(value, nameof(InTangent)); }
     public float OutTangent { get; init => field = CurveValidator.ValidateFloat(value, nameof(OutTangent)); }
+
+
 
     // Parameterless constructor for serialization support
     public FloatString4() : this(0f, 0f, 0f, 0f) { }
@@ -61,6 +63,19 @@ public sealed record FloatString4
     {
         if (other == null) return 1;
         return Time.CompareTo(other.Time);
+    }
+
+    int IComparable<FloatString4>.CompareTo(FloatString4? other)
+    {
+        if (other == null) return 1;
+        return Time.CompareTo(other.Time);
+    }
+
+    // Also implement non-generic for safety
+    public int CompareTo(object? obj)
+    {
+        if (obj is not FloatString4 other) return 1;
+        return CompareTo(other);
     }
 
     public MyKeyframe ToKeyframe() => new(Time, Value, InTangent, OutTangent);

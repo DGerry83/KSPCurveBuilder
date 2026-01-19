@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace KSPCurveBuilder;
@@ -55,16 +56,16 @@ public partial class KSPCurveBuilder : Form
         WireUpEvents();
         SetupDataGridView();
         SetupPictureBox();
-        LoadPresetList();
+        //LoadPresetList();
         LoadDefaultPreset();
 
         SyncPointsToTextbox("Initial Load");
         UpdateUndoButtons();
 
-        if (presetDropdown != null)
-        {
-            presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
-        }
+        //if (presetDropdown != null)
+        //{
+        //    presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+        //}
     }
 
     private void WireUpEvents()
@@ -94,12 +95,21 @@ public partial class KSPCurveBuilder : Form
         buttonCopy.Click += (s, e) => CopyToClipboard();
         buttonPaste.Click += (s, e) => PasteFromClipboard();
         buttonAddNode.Click += (s, e) => AddNode();
-        buttonSavePreset.Click += (s, e) => SavePreset();
-        buttonDeletePreset.Click += (s, e) => DeletePreset();
+        buttonSavePreset.Click += async (s, e) => await SavePresetAsync();
+        buttonDeletePreset.Click += async (s, e) => await DeletePresetAsync();
+        presetDropdown.SelectedIndexChanged += async (s, e) => await PresetDropdown_SelectedIndexChanged();
         buttonResetZoom.Click += (s, e) => _viewController.ResetZoom();
         checkBoxSort.CheckedChanged += (s, e) => ToggleSort();
         buttonUndo.Click += (s, e) => Undo();
         buttonRedo.Click += (s, e) => Redo();
+
+        this.Load += async (s, e) => await InitializeAsync();
+    }
+
+    private async Task InitializeAsync()
+    {
+        await LoadPresetListAsync();
+        // Keep UI responsive while presets load
     }
 
     private void OnDragStarted(object? sender, EventArgs e)
@@ -195,18 +205,28 @@ public partial class KSPCurveBuilder : Form
         }
     }
 
-    private void LoadPresetList()
+    private async Task LoadPresetListAsync()
     {
         if (presetDropdown == null) return;
 
-        presetDropdown.Items.Clear();
-        var presets = _presetService.GetAllPresets();
-        foreach (var preset in presets)
+        presetDropdown.Enabled = false;
+
+        try
         {
-            presetDropdown.Items.Add(preset);
+            var presets = await _presetService.GetAllPresetsAsync();
+            presetDropdown.Items.Clear();
+            foreach (var preset in presets)
+            {
+                presetDropdown.Items.Add(preset);
+            }
+            presetDropdown.DisplayMember = "Name";
         }
-        presetDropdown.DisplayMember = "Name";
+        finally
+        {
+            presetDropdown.Enabled = true;
+        }
     }
+
 
     private void OnPointDragged(object? sender, PointDragEventArgs e)
     {
@@ -284,47 +304,184 @@ public partial class KSPCurveBuilder : Form
         SyncPointsToTextbox("Add Node");
     }
 
-    private void SavePreset()
+    private async void SavePreset(object? sender, EventArgs e)
     {
         if (presetNameTextbox == null) return;
 
         string name = presetNameTextbox.Text.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            MessageBox.Show("Enter a valid preset name.");
+            MessageBox.Show("Enter a valid preset name.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        _presetService.SavePreset(name, "User-created preset", _points);
-        presetNameTextbox.Text = "";
-
-        LoadPresetList();
-        var newlySaved = presetDropdown.Items.Cast<Preset>().FirstOrDefault(p => p.Name == name);
-        if (newlySaved != null)
+        try
         {
-            presetDropdown.SelectedItem = newlySaved;
-        }
+            buttonSavePreset.Enabled = false;
+            buttonSavePreset.Text = "Saving...";
 
-        curveView?.Invalidate();
+            await _presetService.SavePresetAsync(name, "User-created preset", _points);
+
+            presetNameTextbox.Text = "";
+            await LoadPresetListAsync();
+
+            var newlySaved = presetDropdown.Items.Cast<Preset>().FirstOrDefault(p => p.Name == name);
+            if (newlySaved != null)
+            {
+                presetDropdown.SelectedItem = newlySaved;
+            }
+
+            curveView?.Invalidate();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            buttonSavePreset.Enabled = true;
+            buttonSavePreset.Text = "Save";
+        }
     }
 
-    private void DeletePreset()
+    private async Task SavePresetAsync()
+    {
+        if (presetNameTextbox == null) return;
+
+        string name = presetNameTextbox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            MessageBox.Show("Enter a valid preset name.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        try
+        {
+            buttonSavePreset.Enabled = false;
+            buttonSavePreset.Text = "Saving...";
+
+            await _presetService.SavePresetAsync(name, "User-created preset", _points);
+
+            presetNameTextbox.Text = "";
+            await LoadPresetListAsync();
+
+            var newlySaved = presetDropdown.Items.Cast<Preset>().FirstOrDefault(p => p.Name == name);
+            if (newlySaved != null)
+            {
+                presetDropdown.SelectedItem = newlySaved;
+            }
+
+            curveView?.Invalidate();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            buttonSavePreset.Enabled = true;
+            buttonSavePreset.Text = "Save";
+        }
+    }
+
+    private async Task DeletePresetAsync()
     {
         if (presetDropdown?.SelectedItem is not Preset preset) return;
 
-        _presetService.DeletePreset(preset.Name);
-        LoadPresetList();
+        if (MessageBox.Show($"Delete preset '{preset.Name}'?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            return;
 
-        if (presetDropdown.Items.Count > 0)
+        try
         {
-            presetDropdown.SelectedIndex = 0;
-            if (presetDropdown.SelectedItem is Preset defaultPreset)
+            buttonDeletePreset.Enabled = false;
+            buttonDeletePreset.Text = "Deleting...";
+
+            await _presetService.DeletePresetAsync(preset.Name);
+            await LoadPresetListAsync();
+
+            if (presetDropdown.Items.Count > 0)
             {
-                _editorService.LoadFromPoints(defaultPreset.Points);
-                presetNameTextbox.Text = defaultPreset.Name;
-                SyncPointsToTextbox($"Load Preset: {defaultPreset.Name}");
+                presetDropdown.SelectedIndex = 0;
+                if (presetDropdown.SelectedItem is Preset defaultPreset && defaultPreset.Points != null)
+                {
+                    _editorService.LoadFromPoints(defaultPreset.Points);
+                    presetNameTextbox.Text = defaultPreset.Name;
+                    SyncPointsToTextbox($"Load Preset: {defaultPreset.Name}");
+                    curveView?.Invalidate();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            buttonDeletePreset.Enabled = true;
+            buttonDeletePreset.Text = "Delete";
+        }
+    }
+
+    private async Task PresetDropdown_SelectedIndexChanged()
+    {
+        if (presetDropdown?.SelectedItem is Preset preset && preset.Points != null)
+        {
+            presetDropdown.Enabled = false; // Prevent rapid changes
+
+            try
+            {
+                _viewController.ZoomLevel = 1.0f;
+                _viewController.PanCenter = new(0.5f, 0.5f);
+
+                _editorService.LoadFromPoints(preset.Points);
+                presetNameTextbox.Text = preset.Name;
+                SyncPointsToTextbox($"Load Preset: {preset.Name}");
+
+                _viewController.ResetZoom();
                 curveView?.Invalidate();
             }
+            finally
+            {
+                presetDropdown.Enabled = true;
+            }
+        }
+    }
+
+    private async void DeletePreset(object? sender, EventArgs e)
+    {
+        if (presetDropdown?.SelectedItem is not Preset preset) return;
+
+        if (MessageBox.Show($"Delete preset '{preset.Name}'?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            return;
+
+        try
+        {
+            buttonDeletePreset.Enabled = false;
+            buttonDeletePreset.Text = "Deleting...";
+
+            await _presetService.DeletePresetAsync(preset.Name);
+            await LoadPresetListAsync();
+
+            if (presetDropdown.Items.Count > 0)
+            {
+                presetDropdown.SelectedIndex = 0;
+                if (presetDropdown.SelectedItem is Preset defaultPreset && defaultPreset.Points != null)
+                {
+                    _editorService.LoadFromPoints(defaultPreset.Points);
+                    presetNameTextbox.Text = defaultPreset.Name;
+                    SyncPointsToTextbox($"Load Preset: {defaultPreset.Name}");
+                    curveView?.Invalidate();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            buttonDeletePreset.Enabled = true;
+            buttonDeletePreset.Text = "Delete";
         }
     }
 
@@ -392,19 +549,28 @@ public partial class KSPCurveBuilder : Form
         curveText.Text = _editorService.SerializeToText();
     }
 
-    private void PresetDropdown_SelectedIndexChanged(object? sender, EventArgs e)
+    private async void PresetDropdown_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (presetDropdown?.SelectedItem is Preset preset && preset.Points != null)
         {
-            _viewController.ZoomLevel = 1.0f;
-            _viewController.PanCenter = new(0.5f, 0.5f);
+            presetDropdown.Enabled = false; // Prevent rapid changes
 
-            _editorService.LoadFromPoints(preset.Points);
-            presetNameTextbox.Text = preset.Name;
-            SyncPointsToTextbox($"Load Preset: {preset.Name}");
+            try
+            {
+                _viewController.ZoomLevel = 1.0f;
+                _viewController.PanCenter = new(0.5f, 0.5f);
 
-            _viewController.ResetZoom();
-            curveView?.Invalidate();
+                _editorService.LoadFromPoints(preset.Points);
+                presetNameTextbox.Text = preset.Name;
+                SyncPointsToTextbox($"Load Preset: {preset.Name}");
+
+                _viewController.ResetZoom();
+                curveView?.Invalidate();
+            }
+            finally
+            {
+                presetDropdown.Enabled = true;
+            }
         }
     }
 }

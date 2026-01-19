@@ -238,8 +238,14 @@ public class CurveViewController : IDisposable
             if (_originalPoint != null)
             {
                 var points = _editorService.PointsInternal;
-                points[_draggedPointIndex] = _originalPoint with { Time = newTime, Value = newValue };
-                _pictureBox.Refresh();
+                var newPoint = _originalPoint with { Time = newTime, Value = newValue };
+
+                // NULL SAFETY CHECK - prevent corruption
+                if (newPoint != null && _draggedPointIndex >= 0 && _draggedPointIndex < points.Count)
+                {
+                    points[_draggedPointIndex] = newPoint;
+                    _pictureBox.Refresh();
+                }
             }
         }
         else if (_isPanning)

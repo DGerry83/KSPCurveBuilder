@@ -15,11 +15,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace KSPCurveBuilder;
 
 /// <summary>
-/// Manages loading and saving curve presets from disk.
+/// Manages loading and saving curve presets from disk with async I/O.
 /// </summary>
 public static class PresetManager
 {
@@ -35,31 +36,37 @@ public static class PresetManager
             Directory.CreateDirectory(PresetFolder);
     }
 
-    public static void SavePreset(Preset preset)
+    /// <summary>Saves a preset to file asynchronously.</summary>
+    public static async Task SavePresetAsync(Preset preset)
     {
         EnsureFolderExists();
         var filename = Path.Combine(PresetFolder, $"{preset.Name}.curvepreset");
         var lines = preset.Points.Select(p => p.ToKeyString("key")).ToArray();
-        File.WriteAllLines(filename, lines);
+        await File.WriteAllLinesAsync(filename, lines);
     }
 
-    public static Preset? LoadPreset(string presetName)
+    /// <summary>Loads a preset from file asynchronously.</summary>
+    public static async Task<Preset?> LoadPresetAsync(string presetName)
     {
         var filename = Path.Combine(PresetFolder, $"{presetName}.curvepreset");
         if (!File.Exists(filename)) return null;
 
-        var lines = File.ReadAllLines(filename);
+        var lines = await File.ReadAllLinesAsync(filename);
         return ParseFromLines(Path.GetFileNameWithoutExtension(filename), lines);
     }
 
-    public static string[] GetAvailablePresets()
+    /// <summary>Gets all available preset names asynchronously.</summary>
+    public static async Task<string[]> GetAvailablePresetsAsync()
     {
         EnsureFolderExists();
-        var files = Directory.GetFiles(PresetFolder, "*.curvepreset");
-        return files.Select(Path.GetFileNameWithoutExtension).ToArray();
+        return await Task.Run(() =>
+        {
+            var files = Directory.GetFiles(PresetFolder, "*.curvepreset");
+            return files.Select(Path.GetFileNameWithoutExtension).ToArray();
+        });
     }
 
-    public static void DeletePreset(string presetName)
+    public static void DeletePreset(string presetName) // Sync is fine for delete
     {
         var filename = Path.Combine(PresetFolder, $"{presetName}.curvepreset");
         if (File.Exists(filename))
