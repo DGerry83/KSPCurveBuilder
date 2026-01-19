@@ -1,15 +1,15 @@
 ﻿/* 
- * KSPCurveBuilder - A standalone float curve editing tool.
- * 
- * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
- * Logic from that original project is used here and throughout.
- * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian  ).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/  ).
- * 
- * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
- */
+* KSPCurveBuilder - A standalone float curve editing tool.
+* 
+* This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
+* Logic from that original project is used here and throughout.
+* 
+* Original work copyright © 2015 Sarbian (https://github.com/sarbian   ).
+* Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/   ).
+* 
+* This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
+* See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html    or the LICENSE file for full terms.
+*/
 
 #nullable enable
 
@@ -37,11 +37,11 @@ public class CurveRenderer : IDisposable
     private int _hoveredPointIndex = -1;
 
     // Persistent resources (created once, disposed once)
-    private readonly Font _gridFont = new("Arial", 8);
-    private readonly Font _titleFont = new("Arial", 10, FontStyle.Bold);
-    private readonly Pen _curvePen = new(Color.LimeGreen, 2f);
-    private readonly Pen _gridPen = new(Color.FromArgb(60, 60, 60), 1f);
-    private readonly Pen _pointPen = new(Color.White, 2f);
+    private readonly Font _gridFont = new(Constants.Visual.GRID_FONT_NAME, Constants.Visual.GRID_FONT_SIZE);
+    private readonly Font _titleFont = new(Constants.Visual.TITLE_FONT_NAME, Constants.Visual.TITLE_FONT_SIZE, Constants.Visual.TITLE_FONT_STYLE);
+    private readonly Pen _curvePen = new(Color.LimeGreen, Constants.Visual.CURVE_PEN_WIDTH);
+    private readonly Pen _gridPen = new(Color.FromArgb(60, 60, 60), Constants.Visual.GRID_PEN_WIDTH);
+    private readonly Pen _pointPen = new(Color.White, Constants.Visual.POINT_PEN_WIDTH);
     private readonly Brush _pointBrush = Brushes.White;
     private bool _disposed = false;
 
@@ -112,7 +112,7 @@ public class CurveRenderer : IDisposable
             if (IsCoordinateValid(x))
             {
                 g.DrawLine(_gridPen, x, 0, x, _height);
-                g.DrawString(time.ToString("F1", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, x, _height - 15);
+                g.DrawString(time.ToString("F1", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, x, _height - Constants.Visual.GRID_LABEL_OFFSET_Y);
             }
         }
 
@@ -122,7 +122,7 @@ public class CurveRenderer : IDisposable
             if (IsCoordinateValid(y))
             {
                 g.DrawLine(_gridPen, 0, y, _width, y);
-                g.DrawString(value.ToString("F2", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, 5, y);
+                g.DrawString(value.ToString("F2", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, Constants.Visual.GRID_LABEL_VALUE_OFFSET_X, y);
             }
         }
     }
@@ -173,16 +173,16 @@ public class CurveRenderer : IDisposable
 
             Brush brush = isHighlighted ? Brushes.Yellow : _pointBrush;
 
-            g.FillEllipse(brush, x - 4, y - 4, 8, 8);
+            g.FillEllipse(brush, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS, Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
 
             if (isHighlighted)
             {
-                using Pen highlightPen = new(Color.Yellow, 2f);
-                g.DrawEllipse(highlightPen, x - 4, y - 4, 8, 8);
+                using Pen highlightPen = new(Color.Yellow, Constants.Visual.POINT_PEN_WIDTH);
+                g.DrawEllipse(highlightPen, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS, Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
             }
             else
             {
-                g.DrawEllipse(_pointPen, x - 4, y - 4, 8, 8);
+                g.DrawEllipse(_pointPen, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS, Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
             }
         }
     }
@@ -191,15 +191,18 @@ public class CurveRenderer : IDisposable
     {
         string title = $"Curve Editor - {_points.Count} point(s)";
         SizeF titleSize = g.MeasureString(title, _titleFont);
-        float boxWidth = titleSize.Width + 5;
-        float boxHeight = titleSize.Height + 10;
+        float boxWidth = titleSize.Width + Constants.Visual.TITLE_BOX_PADDING_X;
+        float boxHeight = titleSize.Height + Constants.Visual.TITLE_BOX_PADDING_Y;
 
-        g.FillRectangle(Brushes.Black, 35, 5, boxWidth, boxHeight);
-        g.DrawString(title, _titleFont, Brushes.White, 40, 10);
+        g.FillRectangle(Brushes.Black,
+            Constants.Visual.TITLE_OFFSET_X - Constants.Visual.TITLE_BOX_PADDING_X,
+            Constants.Visual.TITLE_OFFSET_Y - Constants.Visual.TITLE_BOX_PADDING_Y,
+            boxWidth, boxHeight);
+        g.DrawString(title, _titleFont, Brushes.White, Constants.Visual.TITLE_OFFSET_X, Constants.Visual.TITLE_OFFSET_Y);
 
         string zoomText = $"Zoom: {_zoomLevel:F1}x";
         SizeF textSize = g.MeasureString(zoomText, _gridFont);
-        float labelX = _width - textSize.Width - 10;
+        float labelX = _width - textSize.Width - Constants.Visual.LABEL_PADDING;
         float labelY = _height - textSize.Height - 30;
         g.DrawString(zoomText, _gridFont, Brushes.White, labelX, labelY);
     }
@@ -213,8 +216,8 @@ public class CurveRenderer : IDisposable
         float x = (point.Time - _minTime) * _width / (_maxTime - _minTime) + Constants.HOVER_LABEL_OFFSET_X;
         float y = _height - ((point.Value - _minValue) * _height / (_maxValue - _minValue)) + Constants.HOVER_LABEL_OFFSET_Y;
 
-        x = Math.Max(5, Math.Min(_width - 120, x));
-        y = Math.Max(5, Math.Min(_height - 60, y));
+        x = Math.Max(Constants.Visual.LABEL_PADDING, Math.Min(_width - 120, x));
+        y = Math.Max(Constants.Visual.LABEL_PADDING, Math.Min(_height - 60, y));
 
         string label = $"Point {_hoveredPointIndex + 1}\n" +
                        $"Time: {FloatString4.FormatNumber(point.Time, "F2")}\n" +
@@ -226,7 +229,7 @@ public class CurveRenderer : IDisposable
 
         g.FillRectangle(Brushes.Black, x, y, boxWidth, boxHeight);
         g.DrawRectangle(Pens.White, x, y, boxWidth, boxHeight);
-        g.DrawString(label, _gridFont, Brushes.White, x + 5, y + 4);
+        g.DrawString(label, _gridFont, Brushes.White, x + Constants.Visual.LABEL_PADDING, y + 4);
     }
 
     private float CalculateNiceStep(float rawStep)

@@ -238,7 +238,7 @@ public class CurveViewController : IDisposable
             if (_originalPoint != null)
             {
                 var points = _editorService.PointsInternal;
-                points[_draggedPointIndex] = _originalPoint.WithTime(newTime).WithValue(newValue);
+                points[_draggedPointIndex] = _originalPoint with { Time = newTime, Value = newValue };
                 _pictureBox.Refresh();
             }
         }

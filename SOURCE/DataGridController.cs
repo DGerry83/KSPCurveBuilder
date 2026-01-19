@@ -1,15 +1,15 @@
 ﻿/* 
- * KSPCurveBuilder - A standalone float curve editing tool.
- * 
- * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
- * Logic from that original project is used here and throughout.
- * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian  ).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/  ).
- * 
- * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
- */
+* KSPCurveBuilder - A standalone float curve editing tool.
+* 
+* This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
+* Logic from that original project is used here and throughout.
+* 
+* Original work copyright © 2015 Sarbian (https://github.com/sarbian   ).
+* Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/   ).
+* 
+* This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
+* See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html    or the LICENSE file for full terms.
+*/
 
 #nullable enable
 
@@ -72,24 +72,14 @@ public class DataGridController
 
         _grid.Rows[e.RowIndex].ErrorText = "";
 
-        FloatString4 newPoint;
-        switch ((DataGridColumn)e.ColumnIndex)
+        FloatString4 newPoint = (DataGridColumn)e.ColumnIndex switch
         {
-            case DataGridColumn.Time:
-                newPoint = oldPoint.WithTime(parsedValue);
-                break;
-            case DataGridColumn.Value:
-                newPoint = oldPoint.WithValue(parsedValue);
-                break;
-            case DataGridColumn.InTangent:
-                newPoint = oldPoint.WithTangents(parsedValue, oldPoint.OutTangent);
-                break;
-            case DataGridColumn.OutTangent:
-                newPoint = oldPoint.WithTangents(oldPoint.InTangent, parsedValue);
-                break;
-            default:
-                return;
-        }
+            DataGridColumn.Time => oldPoint with { Time = parsedValue },
+            DataGridColumn.Value => oldPoint with { Value = parsedValue },
+            DataGridColumn.InTangent => oldPoint with { InTangent = parsedValue },
+            DataGridColumn.OutTangent => oldPoint with { OutTangent = parsedValue },
+            _ => oldPoint
+        };
 
         _editorService.UpdatePoint(e.RowIndex, newPoint);
 
@@ -191,24 +181,14 @@ public class DataGridController
         float valueChange = CalculateDragValueChange(currentValue, mouseDelta, _dragColumnIndex);
         float newValue = ClampDragValue(currentValue + valueChange, _dragColumnIndex);
 
-        FloatString4 newPoint;
-        switch (_dragColumnIndex)
+        FloatString4 newPoint = _dragColumnIndex switch
         {
-            case 0:
-                newPoint = oldPoint.WithTime(newValue);
-                break;
-            case 1:
-                newPoint = oldPoint.WithValue(newValue);
-                break;
-            case 2:
-                newPoint = oldPoint.WithTangents(newValue, oldPoint.OutTangent);
-                break;
-            case 3:
-                newPoint = oldPoint.WithTangents(oldPoint.InTangent, newValue);
-                break;
-            default:
-                return;
-        }
+            0 => oldPoint with { Time = newValue },
+            1 => oldPoint with { Value = newValue },
+            2 => oldPoint with { InTangent = newValue },
+            3 => oldPoint with { OutTangent = newValue },
+            _ => oldPoint
+        };
 
         var points = _editorService.PointsInternal;
         points[_dragRowIndex] = newPoint;
