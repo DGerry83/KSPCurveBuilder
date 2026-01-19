@@ -4,67 +4,63 @@
  * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
  * Logic from that original project is used here and throughout.
  * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian ).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/ ).
+ * Original work copyright © 2015 Sarbian (https://github.com/sarbian  ).
+ * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/  ).
  * 
  * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
+ * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
  */
 
 #nullable enable
 
 using System;
 
-namespace KSPCurveBuilder
+namespace KSPCurveBuilder;
+
+/// <summary>
+/// Encapsulates undo/redo functionality.
+/// </summary>
+public class UndoService
 {
-    /// <summary>
-    /// Encapsulates undo/redo functionality.
-    /// </summary>
-    public class UndoService
+    private readonly SimpleUndoManager _undoManager;
+    private string _lastRecordedState;
+
+    public bool CanUndo => _undoManager.CanUndo;
+    public bool CanRedo => _undoManager.CanRedo;
+    public string UndoActionName => _undoManager.UndoActionName;
+    public string RedoActionName => _undoManager.RedoActionName;
+
+    public event EventHandler? StateChanged;
+
+    public UndoService(string initialState)
     {
-        private readonly SimpleUndoManager _undoManager;
+        _undoManager = new SimpleUndoManager(initialState);
+        _lastRecordedState = initialState;
+        _undoManager.StateChanged += (s, e) => StateChanged?.Invoke(s, EventArgs.Empty);
+    }
 
-        public bool CanUndo => _undoManager.CanUndo;
-        public bool CanRedo => _undoManager.CanRedo;
-        public string UndoActionName => _undoManager.UndoActionName;
-        public string RedoActionName => _undoManager.RedoActionName;
-
-        public event EventHandler? StateChanged;
-
-        // CRITICAL: Track last state to prevent duplicates
-        private string _lastRecordedState = "";
-
-        public UndoService(string initialState)
+    public void RecordAction(string newState, string actionName)
+    {
+        if (newState != _lastRecordedState)
         {
-            _undoManager = new SimpleUndoManager(initialState);
-            _lastRecordedState = initialState;
-            _undoManager.StateChanged += (s, e) => StateChanged?.Invoke(this, EventArgs.Empty);
+            _undoManager.RecordAction(newState, actionName);
+            _lastRecordedState = newState;
         }
+    }
 
-        public void RecordAction(string newState, string actionName)
-        {
-            // CRITICAL: Only record if state actually changed
-            if (newState != _lastRecordedState)
-            {
-                _undoManager.RecordAction(newState, actionName);
-                _lastRecordedState = newState;
-            }
-        }
+    public string? Undo()
+    {
+        var state = _undoManager.Undo();
+        if (state != null)
+            _lastRecordedState = state;
+        return state;
+    }
 
-        public string? Undo()
-        {
-            var state = _undoManager.Undo();
-            if (state != null)
-                _lastRecordedState = state;
-            return state;
-        }
-
-        public string? Redo()
-        {
-            var state = _undoManager.Redo();
-            if (state != null)
-                _lastRecordedState = state;
-            return state;
-        }
+    public string? Redo()
+    {
+        var state = _undoManager.Redo();
+        if (state != null)
+            _lastRecordedState = state;
+        return state;
     }
 }
