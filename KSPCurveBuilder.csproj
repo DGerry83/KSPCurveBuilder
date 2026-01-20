@@ -26,7 +26,7 @@
     <None Remove="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="SOURCE\KSPCurveBuilder.resx">
+    <EmbeddedResource Include="SOURCE\UI\KSPCurveBuilder.resx">
       <DependentUpon>KSPCurveBuilder.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -36,43 +36,43 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SOURCE\AddPointCommand.cs" />
-    <Compile Include="SOURCE\BuiltInPresets.cs" />
-    <Compile Include="SOURCE\ClearPointsCommand.cs" />
-    <Compile Include="SOURCE\Constants.cs" />
-    <Compile Include="SOURCE\CurveEditorService.cs" />
-    <Compile Include="SOURCE\CurveParser.cs" />
-    <Compile Include="SOURCE\CurveRenderer.cs" />
-    <Compile Include="SOURCE\CurveValidator.cs" />
-    <Compile Include="SOURCE\CurveViewController.cs" />
-    <Compile Include="SOURCE\DataGridController.cs" />
-    <Compile Include="SOURCE\DataGridEventArgs.cs" />
-    <Compile Include="SOURCE\DragSpeedCalculator.cs" />
-    <Compile Include="SOURCE\FloatString4.cs" />
-    <Compile Include="SOURCE\FloatCurveStandalone.cs" />
-    <Compile Include="SOURCE\GridDragHandler.cs" />
-    <Compile Include="SOURCE\ICommand.cs" />
-    <Compile Include="SOURCE\LoadPointsCommand.cs" />
-    <Compile Include="SOURCE\MovePointCommand.cs" />
-    <Compile Include="SOURCE\MyAnimationCurve.cs" />
-    <Compile Include="SOURCE\KSPCurveBuilder.cs" />
-    <Compile Include="SOURCE\KSPCurveBuilder.Designer.cs">
+    <Compile Include="SOURCE\Commands\AddPointCommand.cs" />
+    <Compile Include="SOURCE\Presets\BuiltInPresets.cs" />
+    <Compile Include="SOURCE\Commands\ClearPointsCommand.cs" />
+    <Compile Include="SOURCE\Utils\Constants.cs" />
+    <Compile Include="SOURCE\Services\CurveEditorService.cs" />
+    <Compile Include="SOURCE\Utils\CurveParser.cs" />
+    <Compile Include="SOURCE\Rendering\CurveRenderer.cs" />
+    <Compile Include="SOURCE\Utils\CurveValidator.cs" />
+    <Compile Include="SOURCE\Controllers\CurveViewController.cs" />
+    <Compile Include="SOURCE\Controllers\DataGridController.cs" />
+    <Compile Include="SOURCE\Core\DataGridEventArgs.cs" />
+    <Compile Include="SOURCE\Utils\DragSpeedCalculator.cs" />
+    <Compile Include="SOURCE\Core\FloatString4.cs" />
+    <Compile Include="SOURCE\Core\FloatCurveStandalone.cs" />
+    <Compile Include="SOURCE\Controllers\GridDragHandler.cs" />
+    <Compile Include="SOURCE\Commands\ICommand.cs" />
+    <Compile Include="SOURCE\Commands\LoadPointsCommand.cs" />
+    <Compile Include="SOURCE\Commands\MovePointCommand.cs" />
+    <Compile Include="SOURCE\Core\MyAnimationCurve.cs" />
+    <Compile Include="SOURCE\UI\KSPCurveBuilder.cs" />
+    <Compile Include="SOURCE\UI\KSPCurveBuilder.Designer.cs">
       <DependentUpon>KSPCurveBuilder.cs</DependentUpon>
     </Compile>
-    <Compile Include="SOURCE\Preset.cs" />
-    <Compile Include="SOURCE\PresetManager.cs" />
-    <Compile Include="SOURCE\PresetService.cs" />
-    <Compile Include="SOURCE\Program.cs" />
+    <Compile Include="SOURCE\Core\Preset.cs" />
+    <Compile Include="SOURCE\Presets\PresetManager.cs" />
+    <Compile Include="SOURCE\Services\PresetService.cs" />
+    <Compile Include="SOURCE\UI\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <Compile Include="SOURCE\RemovePointCommand.cs" />
-    <Compile Include="SOURCE\SmoothTangentsCommand.cs" />
-    <Compile Include="SOURCE\SortPointsCommand.cs" />
-    <Compile Include="SOURCE\UndoService.cs" />
+    <Compile Include="SOURCE\Commands\RemovePointCommand.cs" />
+    <Compile Include="SOURCE\Commands\SmoothTangentsCommand.cs" />
+    <Compile Include="SOURCE\Commands\SortPointsCommand.cs" />
+    <Compile Include="SOURCE\Services\UndoService.cs" />
     <None Include=".github\workflows\release.yml" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
