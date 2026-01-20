@@ -139,7 +139,8 @@ namespace KSPCurveBuilder
             checkBoxSort.Text = "Sort";
             checkBoxSort.UseVisualStyleBackColor = true;
             checkBoxSort.Checked = true;
-            this.checkBoxSort.CheckedChanged += new System.EventHandler(this.OnCheckBoxSortChanged);
+            //this.checkBoxSort.CheckedChanged += new System.EventHandler(this.OnCheckBoxSortChanged);
+
             // 
             // dataPointEditor
             // 
@@ -169,7 +170,8 @@ namespace KSPCurveBuilder
             presetDropdown.Name = "presetDropdown";
             presetDropdown.Size = new System.Drawing.Size(140, 33);
             presetDropdown.TabIndex = 10;
-            this.presetDropdown.SelectedIndexChanged += new System.EventHandler(this.OnPresetDropdownChanged);
+            //this.presetDropdown.SelectedIndexChanged += new System.EventHandler(this.OnPresetDropdownChanged);
+
             // 
             // presetNameTextbox
             // 

@@ -314,6 +314,7 @@ public partial class KSPCurveBuilder : Form
             buttonSavePreset.Text = "Saving...";
 
             await _presetService.SavePresetAsync(name, "User-created preset", _points);
+            await RefreshPresetDropdownAsync();
 
             presetNameTextbox.Text = "";
             await LoadPresetListAsync();
@@ -350,6 +351,7 @@ public partial class KSPCurveBuilder : Form
             buttonDeletePreset.Text = "Deleting...";
 
             await _presetService.DeletePresetAsync(preset.Name);
+            await RefreshPresetDropdownAsync();
             await LoadPresetListAsync();
 
             if (presetDropdown.Items.Count > 0)
@@ -584,6 +586,43 @@ public partial class KSPCurveBuilder : Form
         {
             // Sort immediately when checkbox is enabled
             ExecuteCommand(new SortPointsCommand(_editorService, _editorService.Points.ToList()));
+        }
+    }
+    /// <summary>Forces the preset dropdown to reload its items from the PresetService</summary>
+    public async Task RefreshPresetDropdownAsync()
+    {
+        // Disable dropdown while loading
+        presetDropdown.Enabled = false;
+
+        try
+        {
+            // Clear items
+            presetDropdown.Items.Clear();
+
+            // Load presets (this is the async operation)
+            var presets = await _presetService.GetAllPresetsAsync();
+
+            // Repopulate
+            foreach (var preset in presets)
+            {
+                presetDropdown.Items.Add(preset);
+            }
+
+            // Set display member AFTER adding items
+            presetDropdown.DisplayMember = "Name";
+
+            // Force UI to refresh
+            presetDropdown.Invalidate();
+
+            // Re-select default if nothing is selected
+            if (presetDropdown.SelectedItem == null && presetDropdown.Items.Count > 0)
+            {
+                presetDropdown.SelectedIndex = 0;
+            }
+        }
+        finally
+        {
+            presetDropdown.Enabled = true;
         }
     }
 }

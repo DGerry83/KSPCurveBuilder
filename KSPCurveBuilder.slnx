@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="../KSPCurveBuilder.FlaUI.Tests/KSPCurveBuilder.FlaUI.Tests.csproj" Id="b1158b82-00d5-44fc-ad3e-59abe9f2ba45" />
   <Project Path="../KSPCurveBuilder.Tests/KSPCurveBuilder.Tests.csproj" Id="85e0f0fe-1922-4127-a1c3-5d9abb5b285d" />
   <Project Path="KSPCurveBuilder.csproj" Id="afa0399e-0e81-4181-96ac-484c17ae3f93" />
 </Solution>
