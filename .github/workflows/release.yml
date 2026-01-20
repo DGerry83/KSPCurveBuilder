@@ -22,7 +22,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Verify Solution
+      - name: Verify Solution  
         shell: pwsh
         run: |
           if (-not (Test-Path "KSPCurveBuilder.slnx")) {
@@ -48,25 +48,31 @@ jobs:
 
       - name: Publish
         shell: pwsh
+        
         run: |
           dotnet publish "KSPCurveBuilder.csproj" -c Release -r win-x64 `
             -p:SelfContained=false -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=false `
-            -p:DebugType=None -o publish
+            -p:DebugType=None -p:DebugSymbols=false -o publish
 
       - name: Archive publish output
         shell: pwsh
+        
         run: |
-          if (Test-Path release.zip) { Remove-Item release.zip }
-          Compress-Archive -Path 'publish\*' -DestinationPath 'release.zip'
+          if (Test-Path release.zip) { Remove-Item release.zip -Force }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::CreateFromDirectory('publish', 'release.zip')
 
-      - name: Create Release and Upload Asset
-        uses: softprops/action-gh-release@v2
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2  
         with:
+          tag_name: ${{ github.ref_name }}
           name: "KSPCurveBuilder ${{ github.ref_name }}"
           body: ${{ steps.tag_message.outputs.BODY }}
           draft: false
           prerelease: false
-          files: release.zip
+          files: |
+            release.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
