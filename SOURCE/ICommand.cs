@@ -11,20 +11,16 @@
  * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
  */
 
-using System;
+#nullable enable
 
 namespace KSPCurveBuilder;
 
-public static class CurveValidator
+/// <summary>
+/// Command pattern interface for undoable operations.
+/// </summary>
+public interface ICommand
 {
-    public static float ValidateFloat(float value, string paramName)
-    {
-        if (float.IsNaN(value) || float.IsInfinity(value))
-            throw new ArgumentOutOfRangeException(paramName, $"{paramName} cannot be NaN or Infinity");
-
-        if (Math.Abs(value) > Constants.MAX_REASONABLE_VALUE)
-            throw new ArgumentOutOfRangeException(paramName, $"{paramName} too large: {value}");
-
-        return value;
-    }
+    string Name { get; }
+    void Execute();
+    void Unexecute();
 }

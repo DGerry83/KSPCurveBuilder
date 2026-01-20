@@ -129,7 +129,8 @@ public class CurveRenderer : IDisposable
 
     private void DrawCurve(Graphics g)
     {
-        if (_curve?.Curve?.keys.Length < 2) return;
+        if (_curve is not { Curve.keys.Length: >= 2 } currentCurve)
+            return;
 
         var curvePoints = new List<PointF>();
         int samples = Math.Min(_width, Constants.MAX_SAMPLES);
@@ -137,7 +138,7 @@ public class CurveRenderer : IDisposable
         for (int i = 0; i <= samples; i++)
         {
             float time = _minTime + (i * (_maxTime - _minTime) / samples);
-            float value = _curve.Evaluate(time);
+            float value = currentCurve.Evaluate(time);
 
             float x = (time - _minTime) * _width / (_maxTime - _minTime);
             float y = _height - ((value - _minValue) * _height / (_maxValue - _minValue));
@@ -164,32 +165,39 @@ public class CurveRenderer : IDisposable
 
         for (int i = 0; i < _points.Count; i++)
         {
+            // ADD NULL CHECK
+            var point = _points[i];
+            if (point == null) continue;
+
             bool isHighlighted = (i == _highlightedPointIndex);
 
-            float x = (_points[i].Time - _minTime) * _width / timeRange;
-            float y = _height - ((_points[i].Value - _minValue) * _height / valueRange);
+            float x = (point.Time - _minTime) * _width / timeRange;
+            float y = _height - ((point.Value - _minValue) * _height / valueRange);
 
             if (!IsCoordinateValid(x) || !IsCoordinateValid(y)) continue;
 
             Brush brush = isHighlighted ? Brushes.Yellow : _pointBrush;
 
-            g.FillEllipse(brush, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS, Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
+            g.FillEllipse(brush, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS,
+                         Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
 
             if (isHighlighted)
             {
                 using Pen highlightPen = new(Color.Yellow, Constants.Visual.POINT_PEN_WIDTH);
-                g.DrawEllipse(highlightPen, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS, Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
+                g.DrawEllipse(highlightPen, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS,
+                             Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
             }
             else
             {
-                g.DrawEllipse(_pointPen, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS, Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
+                g.DrawEllipse(_pointPen, x - Constants.Visual.POINT_DRAW_RADIUS, y - Constants.Visual.POINT_DRAW_RADIUS,
+                             Constants.Visual.POINT_DRAW_SIZE, Constants.Visual.POINT_DRAW_SIZE);
             }
         }
     }
 
     private void DrawLabels(Graphics g)
     {
-        string title = $"Curve Editor - {_points.Count} point(s)";
+        string title = $"KSPCurveBuilder - {_points.Count} point(s)";
         SizeF titleSize = g.MeasureString(title, _titleFont);
         float boxWidth = titleSize.Width + Constants.Visual.TITLE_BOX_PADDING_X;
         float boxHeight = titleSize.Height + Constants.Visual.TITLE_BOX_PADDING_Y;

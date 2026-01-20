@@ -14,53 +14,67 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 
 namespace KSPCurveBuilder;
 
 /// <summary>
-/// Encapsulates undo/redo functionality.
+/// Manages undo/redo using the Command Pattern.
 /// </summary>
-public class UndoService
+public sealed class UndoService
 {
-    private readonly SimpleUndoManager _undoManager;
-    private string _lastRecordedState;
+    private readonly Stack<ICommand> _undoStack = new();
+    private readonly Stack<ICommand> _redoStack = new();
+    private readonly CurveEditorService _editorService;
 
-    public bool CanUndo => _undoManager.CanUndo;
-    public bool CanRedo => _undoManager.CanRedo;
-    public string UndoActionName => _undoManager.UndoActionName;
-    public string RedoActionName => _undoManager.RedoActionName;
+    public bool CanUndo => _undoStack.Count > 0;
+    public bool CanRedo => _redoStack.Count > 0;
+    public string UndoActionName => _undoStack.TryPeek(out var cmd) ? $"Undo {cmd.Name}" : "Undo";
+    public string RedoActionName => _redoStack.TryPeek(out var cmd) ? $"Redo {cmd.Name}" : "Redo";
 
     public event EventHandler? StateChanged;
 
-    public UndoService(string initialState)
+    public UndoService(CurveEditorService editorService)
     {
-        _undoManager = new SimpleUndoManager(initialState);
-        _lastRecordedState = initialState;
-        _undoManager.StateChanged += (s, e) => StateChanged?.Invoke(s, EventArgs.Empty);
+        _editorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
     }
 
-    public void RecordAction(string newState, string actionName)
+    /// <summary>Executes a command and adds it to the undo stack.</summary>
+    public void ExecuteCommand(ICommand command)
     {
-        if (newState != _lastRecordedState)
-        {
-            _undoManager.RecordAction(newState, actionName);
-            _lastRecordedState = newState;
-        }
+        command.Execute();
+        _undoStack.Push(command);
+        _redoStack.Clear();
+        StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public string? Undo()
+    /// <summary>Undoes the last command.</summary>
+    public void Undo()
     {
-        var state = _undoManager.Undo();
-        if (state != null)
-            _lastRecordedState = state;
-        return state;
+        if (_undoStack.Count == 0) return;
+
+        var command = _undoStack.Pop();
+        command.Unexecute();
+        _redoStack.Push(command);
+        StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public string? Redo()
+    /// <summary>Redoes the previously undone command.</summary>
+    public void Redo()
     {
-        var state = _undoManager.Redo();
-        if (state != null)
-            _lastRecordedState = state;
-        return state;
+        if (_redoStack.Count == 0) return;
+
+        var command = _redoStack.Pop();
+        command.Execute();
+        _undoStack.Push(command);
+        StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Clears all undo/redo history.</summary>
+    public void Clear()
+    {
+        _undoStack.Clear();
+        _redoStack.Clear();
+        StateChanged?.Invoke(this, EventArgs.Empty);
     }
 }

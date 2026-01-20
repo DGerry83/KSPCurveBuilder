@@ -19,7 +19,7 @@ public static class Constants
     public const int GRID_LINES = 10;
     public const float DRAG_SENSITIVITY = 0.1f;
     public const float DRAG_REFERENCE = 10000.0f;
-    public const float DRAG_MIN_RATE = 0.00001f;
+    public const float DRAG_MIN_RATE = 0.001f;
     public const float TANGENT_MULTIPLIER = 0.35f;
     public const float MAX_RATE_MULTIPLIER = 300.0f;
     public const float MAX_REASONABLE_VALUE = 1e9f;
@@ -29,6 +29,9 @@ public static class Constants
     public const int HOVER_LABEL_OFFSET_Y = -20;
     public const int DRAG_EDGE_THRESHOLD = 5;
     public const int DRAG_WARP_DISTANCE = 50;
+    //public const float ZOOM_CENTERING_SPEED = 0.5f; // Move 50% of remaining distance per wheel event
+    //public const float ZOOM_CENTERING_SNAP_THRESHOLD = 0.01f; // Snap when within 1% of target
+    public const int DRAG_START_THRESHOLD = 3; // pixels
 
     public static class Visual
     {

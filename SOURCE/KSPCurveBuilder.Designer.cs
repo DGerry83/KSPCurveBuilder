@@ -65,69 +65,65 @@ namespace KSPCurveBuilder
             // 
             curveView.BackColor = System.Drawing.Color.Black;
             curveView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            curveView.Location = new System.Drawing.Point(20, 22);
+            curveView.Location = new System.Drawing.Point(13, 15);
             curveView.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             curveView.Name = "curveView";
-            curveView.Size = new System.Drawing.Size(730, 574);
+            curveView.Size = new System.Drawing.Size(746, 574);
             curveView.TabIndex = 0;
             curveView.TabStop = false;
             // 
             // curveText
             // 
-            curveText.Location = new System.Drawing.Point(599, 610);
-            curveText.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            curveText.Location = new System.Drawing.Point(591, 645);
+            curveText.Margin = new System.Windows.Forms.Padding(4);
             curveText.Multiline = true;
             curveText.Name = "curveText";
             curveText.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            curveText.Size = new System.Drawing.Size(293, 196);
+            curveText.Size = new System.Drawing.Size(308, 291);
             curveText.TabIndex = 1;
             // 
             // buttonNewCurve
             // 
-            buttonNewCurve.Location = new System.Drawing.Point(759, 22);
-            buttonNewCurve.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonNewCurve.Location = new System.Drawing.Point(794, 945);
             buttonNewCurve.Name = "buttonNewCurve";
-            buttonNewCurve.Size = new System.Drawing.Size(133, 58);
+            buttonNewCurve.Size = new System.Drawing.Size(105, 35);
             buttonNewCurve.TabIndex = 2;
             buttonNewCurve.Text = "New Curve";
             buttonNewCurve.UseVisualStyleBackColor = true;
             // 
             // buttonSmooth
             // 
-            buttonSmooth.Location = new System.Drawing.Point(599, 890);
+            buttonSmooth.Location = new System.Drawing.Point(86, 945);
             buttonSmooth.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             buttonSmooth.Name = "buttonSmooth";
-            buttonSmooth.Size = new System.Drawing.Size(133, 58);
+            buttonSmooth.Size = new System.Drawing.Size(90, 35);
             buttonSmooth.TabIndex = 3;
             buttonSmooth.Text = "Smooth";
             buttonSmooth.UseVisualStyleBackColor = true;
             // 
             // buttonCopy
             // 
-            buttonCopy.Location = new System.Drawing.Point(759, 820);
-            buttonCopy.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonCopy.Location = new System.Drawing.Point(591, 603);
             buttonCopy.Name = "buttonCopy";
-            buttonCopy.Size = new System.Drawing.Size(133, 58);
+            buttonCopy.Size = new System.Drawing.Size(80, 35);
             buttonCopy.TabIndex = 4;
             buttonCopy.Text = "Copy";
             buttonCopy.UseVisualStyleBackColor = true;
             // 
             // buttonPaste
             // 
-            buttonPaste.Location = new System.Drawing.Point(759, 92);
-            buttonPaste.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonPaste.Location = new System.Drawing.Point(820, 603);
             buttonPaste.Name = "buttonPaste";
-            buttonPaste.Size = new System.Drawing.Size(133, 58);
+            buttonPaste.Size = new System.Drawing.Size(80, 35);
             buttonPaste.TabIndex = 5;
             buttonPaste.Text = "Paste";
             buttonPaste.UseVisualStyleBackColor = true;
             // 
             // buttonAddNode
             // 
-            buttonAddNode.Location = new System.Drawing.Point(599, 820);
-            buttonAddNode.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonAddNode.Location = new System.Drawing.Point(183, 945);
             buttonAddNode.Name = "buttonAddNode";
-            buttonAddNode.Size = new System.Drawing.Size(133, 58);
+            buttonAddNode.Size = new System.Drawing.Size(110, 35);
             buttonAddNode.TabIndex = 6;
             buttonAddNode.Text = "Add Node";
             buttonAddNode.UseVisualStyleBackColor = true;
@@ -135,31 +131,32 @@ namespace KSPCurveBuilder
             // checkBoxSort
             // 
             checkBoxSort.AutoSize = true;
-            checkBoxSort.Location = new System.Drawing.Point(759, 568);
+            checkBoxSort.Location = new System.Drawing.Point(13, 945);
             checkBoxSort.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             checkBoxSort.Name = "checkBoxSort";
             checkBoxSort.Size = new System.Drawing.Size(71, 29);
             checkBoxSort.TabIndex = 7;
             checkBoxSort.Text = "Sort";
             checkBoxSort.UseVisualStyleBackColor = true;
+            checkBoxSort.Checked = true;
+            this.checkBoxSort.CheckedChanged += new System.EventHandler(this.OnCheckBoxSortChanged);
             // 
             // dataPointEditor
             // 
             dataPointEditor.ColumnHeadersHeight = 34;
-            dataPointEditor.Location = new System.Drawing.Point(20, 610);
+            dataPointEditor.Location = new System.Drawing.Point(13, 603);
             dataPointEditor.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             dataPointEditor.MultiSelect = false;
             dataPointEditor.Name = "dataPointEditor";
             dataPointEditor.RowHeadersWidth = 62;
-            dataPointEditor.Size = new System.Drawing.Size(570, 358);
+            dataPointEditor.Size = new System.Drawing.Size(570, 338);
             dataPointEditor.TabIndex = 8;
             // 
             // buttonResetZoom
             // 
-            buttonResetZoom.Location = new System.Drawing.Point(759, 498);
-            buttonResetZoom.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            buttonResetZoom.Location = new System.Drawing.Point(766, 554);
             buttonResetZoom.Name = "buttonResetZoom";
-            buttonResetZoom.Size = new System.Drawing.Size(133, 58);
+            buttonResetZoom.Size = new System.Drawing.Size(129, 35);
             buttonResetZoom.TabIndex = 9;
             buttonResetZoom.Text = "Reset Zoom";
             buttonResetZoom.UseVisualStyleBackColor = true;
@@ -168,43 +165,41 @@ namespace KSPCurveBuilder
             // 
             presetDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             presetDropdown.FormattingEnabled = true;
-            presetDropdown.Location = new System.Drawing.Point(758, 310);
-            presetDropdown.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            presetDropdown.Location = new System.Drawing.Point(766, 93);
             presetDropdown.Name = "presetDropdown";
-            presetDropdown.Size = new System.Drawing.Size(134, 33);
+            presetDropdown.Size = new System.Drawing.Size(140, 33);
             presetDropdown.TabIndex = 10;
+            this.presetDropdown.SelectedIndexChanged += new System.EventHandler(this.OnPresetDropdownChanged);
             // 
             // presetNameTextbox
             // 
-            presetNameTextbox.Location = new System.Drawing.Point(758, 270);
+            presetNameTextbox.Location = new System.Drawing.Point(766, 14);
             presetNameTextbox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             presetNameTextbox.Name = "presetNameTextbox";
-            presetNameTextbox.Size = new System.Drawing.Size(111, 31);
+            presetNameTextbox.Size = new System.Drawing.Size(140, 31);
             presetNameTextbox.TabIndex = 11;
             // 
             // buttonSavePreset
             // 
-            buttonSavePreset.Location = new System.Drawing.Point(758, 221);
-            buttonSavePreset.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            buttonSavePreset.Location = new System.Drawing.Point(766, 52);
             buttonSavePreset.Name = "buttonSavePreset";
-            buttonSavePreset.Size = new System.Drawing.Size(88, 41);
+            buttonSavePreset.Size = new System.Drawing.Size(90, 35);
             buttonSavePreset.TabIndex = 12;
             buttonSavePreset.Text = "Save";
             buttonSavePreset.UseVisualStyleBackColor = true;
             // 
             // buttonDeletePreset
             // 
-            buttonDeletePreset.Location = new System.Drawing.Point(758, 352);
-            buttonDeletePreset.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            buttonDeletePreset.Location = new System.Drawing.Point(766, 132);
             buttonDeletePreset.Name = "buttonDeletePreset";
-            buttonDeletePreset.Size = new System.Drawing.Size(88, 41);
+            buttonDeletePreset.Size = new System.Drawing.Size(90, 35);
             buttonDeletePreset.TabIndex = 13;
             buttonDeletePreset.Text = "Delete";
             buttonDeletePreset.UseVisualStyleBackColor = true;
             // 
             // buttonUndo
             // 
-            buttonUndo.Location = new System.Drawing.Point(740, 914);
+            buttonUndo.Location = new System.Drawing.Point(431, 946);
             buttonUndo.Name = "buttonUndo";
             buttonUndo.Size = new System.Drawing.Size(73, 34);
             buttonUndo.TabIndex = 14;
@@ -213,9 +208,9 @@ namespace KSPCurveBuilder
             // 
             // buttonRedo
             // 
-            buttonRedo.Location = new System.Drawing.Point(819, 914);
+            buttonRedo.Location = new System.Drawing.Point(508, 945);
             buttonRedo.Name = "buttonRedo";
-            buttonRedo.Size = new System.Drawing.Size(73, 34);
+            buttonRedo.Size = new System.Drawing.Size(75, 35);
             buttonRedo.TabIndex = 15;
             buttonRedo.Text = "Redo";
             buttonRedo.UseVisualStyleBackColor = true;
@@ -224,7 +219,7 @@ namespace KSPCurveBuilder
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(912, 985);
+            ClientSize = new System.Drawing.Size(912, 986);
             Controls.Add(buttonRedo);
             Controls.Add(buttonUndo);
             Controls.Add(buttonDeletePreset);
@@ -241,12 +236,11 @@ namespace KSPCurveBuilder
             Controls.Add(buttonNewCurve);
             Controls.Add(curveText);
             Controls.Add(curveView);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            MaximizeBox = false;
             Name = "KSPCurveBuilder";
             Text = "KSP Curve Builder";
-            // FIXED: Use the correct enum syntax
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            MaximizeBox = false;
             ((System.ComponentModel.ISupportInitialize)curveView).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataPointEditor).EndInit();
             ResumeLayout(false);

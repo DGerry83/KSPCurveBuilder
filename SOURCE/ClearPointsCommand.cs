@@ -11,29 +11,24 @@
 * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
 */
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 
 namespace KSPCurveBuilder;
 
 /// <summary>
-/// Immutable preset class with required init-only properties.
+/// Command to clear all points from the curve.
 /// </summary>
-public class Preset
+public sealed class ClearPointsCommand(CurveEditorService service, List<FloatString4> pointsBefore) : ICommand
 {
-    public required string Name { get; init; }
-    public string Description { get; init; } = "";
-    public List<FloatString4> Points { get; init; } = [];
+    private readonly CurveEditorService _service = service ?? throw new ArgumentNullException(nameof(service));
+    private readonly List<FloatString4> _pointsBefore = pointsBefore ?? throw new ArgumentNullException(nameof(pointsBefore));
 
-    // Obsolete: Use object initializer syntax instead
-    [Obsolete("Use object initializer syntax: new Preset { Name = ..., Points = [...] }")]
-    public static Preset FromPoints(string name, string description, IEnumerable<FloatString4> points)
-    {
-        return new Preset
-        {
-            Name = name,
-            Description = description,
-            Points = [.. points]
-        };
-    }
+    public string Name => "Clear Points";
+
+    public void Execute() => _service.ClearPoints();
+
+    public void Unexecute() => _service.LoadFromPoints(_pointsBefore);
 }

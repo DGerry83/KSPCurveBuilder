@@ -4,11 +4,11 @@
  * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
  * Logic from that original project is used here and throughout.
  * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian  ).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/  ).
+ * Original work copyright © 2015 Sarbian (https://github.com/sarbian   ).
+ * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/   ).
  * 
  * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
+ * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html    or the LICENSE file for full terms.
  */
 
 #nullable enable
@@ -40,13 +40,14 @@ public class CurveViewController : IDisposable
     private Point _panDragStart = Point.Empty;
     private bool _isPanning = false;
     private FloatString4? _originalPoint = null;
+    public int CurrentlyDraggedPointIndex => _isDraggingPoint ? _draggedPointIndex : -1;
+    public FloatString4? CurrentlyDraggedPointOriginal => _originalPoint;
 
     public event EventHandler? DragStarted;
     public event EventHandler? DragEnded;
-    public event EventHandler<PointDragEventArgs>? PointDragged;
     public event EventHandler? ViewChanged;
+    public event EventHandler<PointAddedEventArgs>? PointAdded;
 
-    // CORRECT: Classic constructor (not primary constructor body) for maximum compatibility
     public CurveViewController(PictureBox pictureBox, CurveEditorService editorService, Func<FloatCurveStandalone?> getCurve)
     {
         _pictureBox = pictureBox ?? throw new ArgumentNullException(nameof(pictureBox));
@@ -171,26 +172,37 @@ public class CurveViewController : IDisposable
     {
         if (_pictureBox == null) return;
 
-        float oldZoom = ZoomLevel;
         float zoomFactor = e.Delta > 0 ? 1.1f : 0.9f;
-        ZoomLevel = Math.Max(0.1f, Math.Min(10.0f, ZoomLevel * zoomFactor));
+        float newZoom = Math.Max(0.1f, Math.Min(10.0f, ZoomLevel * zoomFactor));
 
-        if (Math.Abs(ZoomLevel - oldZoom) > 0.001f)
+        if (Math.Abs(newZoom - ZoomLevel) > 0.001f)
         {
-            float cursorTime = GraphMinTime + (e.X / (float)_pictureBox.Width) * (GraphMaxTime - GraphMinTime);
-            float cursorValue = GraphMaxValue - (e.Y / (float)_pictureBox.Height) * (GraphMaxValue - GraphMinValue);
+            // Get the full data range (constant)
+            var (dataMinTime, dataMaxTime, dataMinValue, dataMaxValue) = CalculateDataRange();
+            float timeRange = dataMaxTime - dataMinTime;
+            float valueRange = dataMaxValue - dataMinValue;
 
-            float timeRatio = (cursorTime - GraphMinTime) / (GraphMaxTime - GraphMinTime);
-            float valueRatio = (GraphMaxValue - cursorValue) / (GraphMaxValue - GraphMinValue);
+            // Calculate cursor position ratios
+            float cursorXRatio = e.X / (float)_pictureBox.Width;
+            float cursorYRatio = e.Y / (float)_pictureBox.Height;
+
+            // Get data coordinate under cursor using CURRENT view bounds (before zoom)
+            float cursorTime = GraphMinTime + cursorXRatio * (GraphMaxTime - GraphMinTime);
+            float cursorValue = GraphMaxValue - cursorYRatio * (GraphMaxValue - GraphMinValue);
+
+            // Apply new zoom
+            ZoomLevel = newZoom;
+
+            // Calculate the EXACT pan center needed to keep data point under cursor
+            // Formula derived from: D = dataMin + range * (PanCenter + (ratio - 0.5) * (1.2/Z))
+            float paddingFactor = 1.2f / newZoom;
+
+            float newPanX = (cursorTime - dataMinTime) / timeRange - (cursorXRatio - 0.5f) * paddingFactor;
+            float newPanY = (cursorValue - dataMinValue) / valueRange - (0.5f - cursorYRatio) * paddingFactor;
 
             PanCenter = new(
-                PanCenter.X + (timeRatio - 0.5f) * (1 - oldZoom / ZoomLevel),
-                PanCenter.Y + (valueRatio - 0.5f) * (1 - oldZoom / ZoomLevel)
-            );
-
-            PanCenter = new(
-                Math.Max(0.01f, Math.Min(0.99f, PanCenter.X)),
-                Math.Max(0.01f, Math.Min(0.99f, PanCenter.Y))
+                Math.Max(0.01f, Math.Min(0.99f, newPanX)),
+                Math.Max(0.01f, Math.Min(0.99f, newPanY))
             );
 
             ViewChanged?.Invoke(this, EventArgs.Empty);
@@ -229,52 +241,67 @@ public class CurveViewController : IDisposable
     {
         if (_isDraggingPoint && _draggedPointIndex >= 0)
         {
-            float newTime = GraphMinTime + (e.X / (float)_pictureBox.Width) * (GraphMaxTime - GraphMinTime);
-            float newValue = GraphMaxValue - (e.Y / (float)_pictureBox.Height) * (GraphMaxValue - GraphMinValue);
-
-            newTime = Math.Max(0f, Math.Min(newTime, Constants.MAX_REASONABLE_VALUE));
-            newValue = Math.Max(-Constants.MAX_REASONABLE_VALUE, Math.Min(newValue, Constants.MAX_REASONABLE_VALUE));
-
-            if (_originalPoint != null)
-            {
-                var points = _editorService.PointsInternal;
-                var newPoint = _originalPoint with { Time = newTime, Value = newValue };
-
-                // NULL SAFETY CHECK - prevent corruption
-                if (newPoint != null && _draggedPointIndex >= 0 && _draggedPointIndex < points.Count)
-                {
-                    points[_draggedPointIndex] = newPoint;
-                    _pictureBox.Refresh();
-                }
-            }
+            HandlePointDrag(e);
         }
         else if (_isPanning)
         {
-            float timePerPixel = (GraphMaxTime - GraphMinTime) / _pictureBox.Width;
-            float valuePerPixel = (GraphMaxValue - GraphMinValue) / _pictureBox.Height;
-
-            float deltaX = (e.X - _panDragStart.X) * timePerPixel / ZoomLevel;
-            float deltaY = (e.Y - _panDragStart.Y) * valuePerPixel / ZoomLevel;
-
-            PanCenter = new(
-                PanCenter.X - deltaX / (GraphMaxTime - GraphMinTime),
-                PanCenter.Y + deltaY / (GraphMaxValue - GraphMinValue)
-            );
-
-            _panDragStart = e.Location;
-            ViewChanged?.Invoke(this, EventArgs.Empty);
+            HandlePanning(e);
         }
         else
         {
-            int newHoveredIndex = HitTestPoint(e.Location);
-            if (newHoveredIndex != _hoveredPointIndex)
-            {
-                _hoveredPointIndex = newHoveredIndex;
-                _pictureBox.Invalidate();
-            }
-
-            _pictureBox.Cursor = (_hoveredPointIndex >= 0) ? Cursors.Hand : Cursors.Cross;
+            UpdateHoverState(e);
         }
+    }
+
+    private void HandlePointDrag(MouseEventArgs e)
+    {
+        float newTime = GraphMinTime + (e.X / (float)_pictureBox.Width) * (GraphMaxTime - GraphMinTime);
+        float newValue = GraphMaxValue - (e.Y / (float)_pictureBox.Height) * (GraphMaxValue - GraphMinValue);
+
+        newTime = Math.Max(0f, Math.Min(newTime, Constants.MAX_REASONABLE_VALUE));
+        newValue = Math.Max(-Constants.MAX_REASONABLE_VALUE, Math.Min(newValue, Constants.MAX_REASONABLE_VALUE));
+
+        if (_originalPoint != null)
+        {
+            var points = _editorService.PointsInternal;
+            var newPoint = _originalPoint with { Time = newTime, Value = newValue };
+
+            // NULL SAFETY CHECK - prevent corruption
+            if (newPoint != null && _draggedPointIndex >= 0 && _draggedPointIndex < points.Count)
+            {
+                points[_draggedPointIndex] = newPoint;
+                _pictureBox.Refresh();
+            }
+        }
+    }
+
+    private void HandlePanning(MouseEventArgs e)
+    {
+        float timePerPixel = (GraphMaxTime - GraphMinTime) / _pictureBox.Width;
+        float valuePerPixel = (GraphMaxValue - GraphMinValue) / _pictureBox.Height;
+
+        float deltaX = (e.X - _panDragStart.X) * timePerPixel / ZoomLevel;
+        float deltaY = (e.Y - _panDragStart.Y) * valuePerPixel / ZoomLevel;
+
+        PanCenter = new(
+            PanCenter.X - deltaX / (GraphMaxTime - GraphMinTime),
+            PanCenter.Y + deltaY / (GraphMaxValue - GraphMinValue)
+        );
+
+        _panDragStart = e.Location;
+        ViewChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void UpdateHoverState(MouseEventArgs e)
+    {
+        int newHoveredIndex = HitTestPoint(e.Location);
+        if (newHoveredIndex != _hoveredPointIndex)
+        {
+            _hoveredPointIndex = newHoveredIndex;
+            _pictureBox.Invalidate();
+        }
+
+        _pictureBox.Cursor = (_hoveredPointIndex >= 0) ? Cursors.Hand : Cursors.Cross;
     }
 
     private void OnMouseUp(object? sender, MouseEventArgs e)
@@ -305,8 +332,7 @@ public class CurveViewController : IDisposable
             float newValue = GraphMaxValue - (e.Y / (float)_pictureBox.Height) * (GraphMaxValue - GraphMinValue);
 
             var newPoint = new FloatString4(time, newValue, 0f, 0f);
-            _editorService.AddPoint(newPoint);
-            DragEnded?.Invoke(this, EventArgs.Empty);
+            PointAdded?.Invoke(this, new PointAddedEventArgs(newPoint));
         }
     }
 
@@ -378,6 +404,16 @@ public class CurveViewController : IDisposable
     public void Dispose()
     {
         _renderer.Dispose();
+    }
+}
+
+public class PointAddedEventArgs : EventArgs
+{
+    public FloatString4 Point { get; }
+
+    public PointAddedEventArgs(FloatString4 point)
+    {
+        Point = point;
     }
 }
 

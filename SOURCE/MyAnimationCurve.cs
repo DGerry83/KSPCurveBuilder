@@ -7,7 +7,7 @@
  * Original work copyright © 2015 Sarbian (https://github.com/sarbian ).
  * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/ ).
  * 
- * This file is part of Curve Editor, free software under the GPLv2 license. 
+ * This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
  * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
  */
 
@@ -214,39 +214,28 @@ public class MyKeyframe
     private float _inTangent;
     private float _outTangent;
 
-    private static float ValidateProperty(float value, string propertyName)
-    {
-        if (float.IsNaN(value) || float.IsInfinity(value))
-            throw new ArgumentOutOfRangeException(propertyName, $"{propertyName} cannot be NaN or Infinity");
-
-        if (Math.Abs(value) > Constants.MAX_REASONABLE_VALUE)
-            throw new ArgumentOutOfRangeException(propertyName, $"{propertyName} too large: {value}");
-
-        return value;
-    }
-
     public float Time
     {
         get => _time;
-        set => _time = ValidateProperty(value, nameof(Time));
+        set => _time = CurveValidator.ValidateFloat(value, nameof(Time));
     }
 
     public float Value
     {
         get => _value;
-        set => _value = ValidateProperty(value, nameof(Value));
+        set => _value = CurveValidator.ValidateFloat(value, nameof(Value));
     }
 
     public float InTangent
     {
         get => _inTangent;
-        set => _inTangent = ValidateProperty(value, nameof(InTangent));
+        set => _inTangent = CurveValidator.ValidateFloat(value, nameof(InTangent));
     }
 
     public float OutTangent
     {
         get => _outTangent;
-        set => _outTangent = ValidateProperty(value, nameof(OutTangent));
+        set => _outTangent = CurveValidator.ValidateFloat(value, nameof(OutTangent));
     }
 
     public MyKeyframe() { }

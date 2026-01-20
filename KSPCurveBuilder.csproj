@@ -10,6 +10,10 @@
     <RootNamespace>KSPCurveBuilder</RootNamespace>
     <ApplicationIcon>CurveIcon.ico</ApplicationIcon>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Company></Company>
+    <Product>KSPCurveBuilder</Product>
+    <Title>KSPCurveBuilder</Title>
+    <Version>1.0.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="App.config" />
@@ -25,7 +29,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SOURCE\AddPointCommand.cs" />
     <Compile Include="SOURCE\BuiltInPresets.cs" />
+    <Compile Include="SOURCE\ClearPointsCommand.cs" />
     <Compile Include="SOURCE\Constants.cs" />
     <Compile Include="SOURCE\CurveEditorService.cs" />
     <Compile Include="SOURCE\CurveParser.cs" />
@@ -33,9 +39,14 @@
     <Compile Include="SOURCE\CurveValidator.cs" />
     <Compile Include="SOURCE\CurveViewController.cs" />
     <Compile Include="SOURCE\DataGridController.cs" />
+    <Compile Include="SOURCE\DataGridEventArgs.cs" />
     <Compile Include="SOURCE\DragSpeedCalculator.cs" />
     <Compile Include="SOURCE\FloatString4.cs" />
     <Compile Include="SOURCE\FloatCurveStandalone.cs" />
+    <Compile Include="SOURCE\GridDragHandler.cs" />
+    <Compile Include="SOURCE\ICommand.cs" />
+    <Compile Include="SOURCE\LoadPointsCommand.cs" />
+    <Compile Include="SOURCE\MovePointCommand.cs" />
     <Compile Include="SOURCE\MyAnimationCurve.cs" />
     <Compile Include="SOURCE\KSPCurveBuilder.cs" />
     <Compile Include="SOURCE\KSPCurveBuilder.Designer.cs">
@@ -51,7 +62,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <Compile Include="SOURCE\UndoManager.cs" />
+    <Compile Include="SOURCE\RemovePointCommand.cs" />
+    <Compile Include="SOURCE\SmoothTangentsCommand.cs" />
+    <Compile Include="SOURCE\SortPointsCommand.cs" />
     <Compile Include="SOURCE\UndoService.cs" />
     <None Include=".github\workflows\release.yml" />
     <None Include="Properties\Settings.settings">

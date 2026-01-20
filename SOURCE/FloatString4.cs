@@ -59,24 +59,19 @@ public sealed record FloatString4 : IComparable<FloatString4>, IComparable
     public string InTangentString => FormatNumber(InTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
     public string OutTangentString => FormatNumber(OutTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
 
-    public int CompareTo(FloatString4? other)
-    {
-        if (other == null) return 1;
-        return Time.CompareTo(other.Time);
-    }
+// Single implementation - no explicit interface duplication
+public int CompareTo(FloatString4? other)
+{
+    if (other == null) return 1;
+    return Time.CompareTo(other.Time);
+}
 
-    int IComparable<FloatString4>.CompareTo(FloatString4? other)
-    {
-        if (other == null) return 1;
-        return Time.CompareTo(other.Time);
-    }
-
-    // Also implement non-generic for safety
-    public int CompareTo(object? obj)
-    {
-        if (obj is not FloatString4 other) return 1;
-        return CompareTo(other);
-    }
+// Also implement non-generic for safety
+public int CompareTo(object? obj)
+{
+    if (obj is not FloatString4 other) return 1;
+    return CompareTo(other);
+}
 
     public MyKeyframe ToKeyframe() => new(Time, Value, InTangent, OutTangent);
 

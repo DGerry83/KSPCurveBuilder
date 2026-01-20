@@ -81,6 +81,10 @@ public class CurveEditorService(List<FloatString4> points, BindingList<FloatStri
         _bindingList.ResetBindings();
         SilentPointsChanged?.Invoke(this, EventArgs.Empty);
     }
+    public void TriggerSilentPointsChanged()
+    {
+        SilentPointsChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public void SortByTimeSilently()
     {
@@ -97,9 +101,22 @@ public class CurveEditorService(List<FloatString4> points, BindingList<FloatStri
         _bindingList.ResetBindings();
         PointsChanged?.Invoke(this, EventArgs.Empty);
     }
+    /// <summary>Inserts a point at a specific index and triggers binding refresh.</summary>
+    public void InsertPoint(int index, FloatString4 point)
+    {
+        if (point == null) return;
+        if (index < 0 || index > _points.Count) return;
+
+        _points.Insert(index, point);
+        _bindingList.ResetBindings();
+        PointsChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public void SmoothTangents()
     {
+        // Don't attempt smoothing with fewer than 3 points
+        if (_points.Count < 3) return;
+
         var curve = CreateCurveFromPoints();
         if (curve != null)
         {
