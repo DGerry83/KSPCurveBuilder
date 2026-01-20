@@ -60,8 +60,7 @@ public class MyAnimationCurve
         return insertIndex;
     }
 
-    // CORRECT: AddKey method is here in MyAnimationCurve, not in MyKeyframe
-    public void AddKey(float time, float value, float inTangent, float outTangent)
+     public void AddKey(float time, float value, float inTangent, float outTangent)
     {
         var key = new MyKeyframe(time, value, inTangent, outTangent);
         _keys.Add(key);

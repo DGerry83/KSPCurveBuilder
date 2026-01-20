@@ -25,7 +25,6 @@ public class Preset
     public string Description { get; init; } = "";
     public List<FloatString4> Points { get; init; } = [];
 
-    // Obsolete: Use object initializer syntax instead
     [Obsolete("Use object initializer syntax: new Preset { Name = ..., Points = [...] }")]
     public static Preset FromPoints(string name, string description, IEnumerable<FloatString4> points)
     {

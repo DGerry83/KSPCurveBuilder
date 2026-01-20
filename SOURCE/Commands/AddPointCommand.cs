@@ -39,7 +39,6 @@ public sealed class AddPointCommand(CurveEditorService service, FloatString4 poi
         _service.AddPoint(_point);
 
         // Store the index after adding (reflects any sorting that occurred)
-        // FIX: Use PointsInternal instead of Points
         _addedIndex = _service.PointsInternal.IndexOf(_point);
 
         // Check if sorting occurred
@@ -51,7 +50,6 @@ public sealed class AddPointCommand(CurveEditorService service, FloatString4 poi
     {
         if (_addedIndex >= 0 && _addedIndex < _service.Points.Count)
         {
-            // FIX: Use PointsInternal for list operations
             // Verify the point at this index matches what we expect
             var currentPoint = _service.PointsInternal[_addedIndex];
             if (Math.Abs(currentPoint.Time - _point.Time) < 0.001f &&
@@ -62,7 +60,6 @@ public sealed class AddPointCommand(CurveEditorService service, FloatString4 poi
             else
             {
                 // Fallback: search for the point by value
-                // FIX: Use PointsInternal instead of Points
                 var index = _service.PointsInternal.FindIndex(p =>
                     Math.Abs(p.Time - _point.Time) < 0.001f &&
                     Math.Abs(p.Value - _point.Value) < 0.001f);

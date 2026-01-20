@@ -165,7 +165,6 @@ public class CurveRenderer : IDisposable
 
         for (int i = 0; i < _points.Count; i++)
         {
-            // ADD NULL CHECK
             var point = _points[i];
             if (point == null) continue;
 

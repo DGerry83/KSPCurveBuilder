@@ -106,7 +106,6 @@ public class FloatCurveStandalone
 
 	public void SmoothTangents()
 	{
-		// FIX: Only smooth middle points, not endpoints
 		if (fCurve?.keys == null || fCurve.keys.Length < 3) return;
 
 		for (int i = 1; i < fCurve.keys.Length - 1; i++)

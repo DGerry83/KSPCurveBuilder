@@ -54,7 +54,6 @@ public partial class KSPCurveBuilder : Form
 
         _presetService = new PresetService();
 
-        // CHANGE: UndoService now requires editor service reference
         _undoService = new UndoService(_editorService);
 
         WireUpEvents();
@@ -140,8 +139,6 @@ public partial class KSPCurveBuilder : Form
     private void SetupOtherUIEventHandlers()
     {
         checkBoxSort.CheckedChanged += OnCheckBoxSortChanged;
-        // Event subscriptions moved to Designer.cs - keep only non-Designer events here
-        // (such as ToggleSort if not in Designer, but it likely is too)
     }
 
 
@@ -584,7 +581,6 @@ public partial class KSPCurveBuilder : Form
     {
         if (checkBoxSort.Checked)
         {
-            // Sort immediately when checkbox is enabled
             ExecuteCommand(new SortPointsCommand(_editorService, _editorService.Points.ToList()));
         }
     }

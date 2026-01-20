@@ -29,8 +29,6 @@ public static class Constants
     public const int HOVER_LABEL_OFFSET_Y = -20;
     public const int DRAG_EDGE_THRESHOLD = 5;
     public const int DRAG_WARP_DISTANCE = 50;
-    //public const float ZOOM_CENTERING_SPEED = 0.5f; // Move 50% of remaining distance per wheel event
-    //public const float ZOOM_CENTERING_SNAP_THRESHOLD = 0.01f; // Snap when within 1% of target
     public const int DRAG_START_THRESHOLD = 3; // pixels
 
     public static class Visual

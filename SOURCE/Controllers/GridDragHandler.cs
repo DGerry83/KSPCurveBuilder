@@ -99,10 +99,7 @@ public sealed class GridDragHandler
         _currentDragPoint = newPoint;
         _lastDragValue = newValue;
 
-        // CRITICAL: Only update internal list and PictureBox - NO direct grid cell manipulation
         UpdatePointTemporarily(_dragRowIndex, _currentDragPoint);
-
-        // NO DragCompleted event during drag - only on mouse up
 
         _dragStartPos = e.Location;
     }
@@ -111,15 +108,12 @@ public sealed class GridDragHandler
     {
         if (!_isMouseDown) return;
 
-        // FINALIZE: Only fire DragCompleted once at the end
         if (_isDragging && _originalPoint != null && _currentDragPoint != null)
         {
             DragCompleted?.Invoke(this, new PointDraggedEventArgs(
                 _dragRowIndex, _originalPoint, _currentDragPoint
             ));
         }
-        // Otherwise it was just a click - grid enters edit mode naturally
-
         Cleanup();
     }
 
@@ -130,7 +124,6 @@ public sealed class GridDragHandler
         {
             points[index] = point;
 
-            // Only trigger PictureBox update, no grid events
             _editorService.TriggerSilentPointsChanged();
 
             if (IsTimeColumn(_dragColumnIndex))
