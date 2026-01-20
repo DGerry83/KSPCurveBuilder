@@ -41,10 +41,10 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Restore
-        run: dotnet restore "KSPCurveBuilder.slnx"
+        run: dotnet restore "KSPCurveBuilder.csproj"
 
       - name: Build
-        run: dotnet build "KSPCurveBuilder.slnx" -c Release --no-restore
+        run: dotnet build "KSPCurveBuilder.csproj" -c Release --no-restore
 
       - name: Publish
         shell: pwsh
