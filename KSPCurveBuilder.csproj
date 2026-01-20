@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -9,6 +9,18 @@
     <AssemblyName>KSPCurveBuilder</AssemblyName>
     <RootNamespace>KSPCurveBuilder</RootNamespace>
     <ApplicationIcon>CurveIcon.ico</ApplicationIcon>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Company></Company>
+    <Product>KSPCurveBuilder</Product>
+    <Title>KSPCurveBuilder</Title>
+    <Version>2.0.0</Version>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <IncludeWindowsSDKRefFrameworkReferences>false</IncludeWindowsSDKRefFrameworkReferences>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="App.config" />
@@ -24,21 +36,32 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SOURCE\AddPointCommand.cs" />
     <Compile Include="SOURCE\BuiltInPresets.cs" />
+    <Compile Include="SOURCE\ClearPointsCommand.cs" />
     <Compile Include="SOURCE\Constants.cs" />
+    <Compile Include="SOURCE\CurveEditorService.cs" />
+    <Compile Include="SOURCE\CurveParser.cs" />
     <Compile Include="SOURCE\CurveRenderer.cs" />
     <Compile Include="SOURCE\CurveValidator.cs" />
+    <Compile Include="SOURCE\CurveViewController.cs" />
+    <Compile Include="SOURCE\DataGridController.cs" />
+    <Compile Include="SOURCE\DataGridEventArgs.cs" />
+    <Compile Include="SOURCE\DragSpeedCalculator.cs" />
     <Compile Include="SOURCE\FloatString4.cs" />
     <Compile Include="SOURCE\FloatCurveStandalone.cs" />
+    <Compile Include="SOURCE\GridDragHandler.cs" />
+    <Compile Include="SOURCE\ICommand.cs" />
+    <Compile Include="SOURCE\LoadPointsCommand.cs" />
+    <Compile Include="SOURCE\MovePointCommand.cs" />
     <Compile Include="SOURCE\MyAnimationCurve.cs" />
-    <Compile Include="SOURCE\KSPCurveBuilder.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="SOURCE\KSPCurveBuilder.cs" />
     <Compile Include="SOURCE\KSPCurveBuilder.Designer.cs">
       <DependentUpon>KSPCurveBuilder.cs</DependentUpon>
     </Compile>
     <Compile Include="SOURCE\Preset.cs" />
     <Compile Include="SOURCE\PresetManager.cs" />
+    <Compile Include="SOURCE\PresetService.cs" />
     <Compile Include="SOURCE\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -46,6 +69,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <Compile Include="SOURCE\RemovePointCommand.cs" />
+    <Compile Include="SOURCE\SmoothTangentsCommand.cs" />
+    <Compile Include="SOURCE\SortPointsCommand.cs" />
+    <Compile Include="SOURCE\UndoService.cs" />
     <None Include=".github\workflows\release.yml" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -58,11 +85,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md;LICENSE.txt">
+    <EmbeddedResource Include="README.md;LICENSE.txt">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="CurveIcon.ico" />
+    <EmbeddedResource Include="CurveIcon.ico" />
   </ItemGroup>
 </Project>

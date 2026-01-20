@@ -1,104 +1,99 @@
 ﻿/* 
- * KSPCurveBuilder - A standalone float curve editing tool.
- * 
- * This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
- * Logic from that original project is used here and throughout.
- * 
- * Original work copyright © 2015 Sarbian (https://github.com/sarbian).
- * Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/).
- * 
- * This file is part of Curve Editor, free software under the GPLv2 license. 
- * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html or the LICENSE file for full terms.
- */
-
+* KSPCurveBuilder - A standalone float curve editing tool.
+* 
+* This file is part of a project based on AmazingCurveEditor (Copyright (C) sarbian).
+* Logic from that original project is used here and throughout.
+* 
+* Original work copyright © 2015 Sarbian (https://github.com/sarbian  ).
+* Modifications, restructuring, and new code copyright © 2026 DGerry83(https://github.com/DGerry83/  ).
+* 
+* This file is part of KSPCurveBuilder, free software under the GPLv2 license. 
+* See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html   or the LICENSE file for full terms.
+*/
+#nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace KSPCurveBuilder
+namespace KSPCurveBuilder;
+
+/// <summary>
+/// Manages loading and saving curve presets from disk with async I/O.
+/// </summary>
+public static class PresetManager
 {
-    /// <summary>
-    /// Manages loading and saving curve presets from disk.
-    /// </summary>
-    public static class PresetManager
+    private static readonly string PresetFolder = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "KSPCurveBuilder",
+        "Presets"
+    );
+
+    private static void EnsureFolderExists()
     {
-        private static readonly string PresetFolder = Path.Combine(
-            System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData),
-            "KSPCurveBuilder",
-            "Presets"
-        );
+        if (!Directory.Exists(PresetFolder))
+            Directory.CreateDirectory(PresetFolder);
+    }
 
-        /// <summary>
-        /// Ensures the preset folder exists.
-        /// </summary>
-        private static void EnsureFolderExists()
+    /// <summary>Saves a preset to file asynchronously.</summary>
+    public static async Task SavePresetAsync(Preset preset)
+    {
+        EnsureFolderExists();
+        var filename = Path.Combine(PresetFolder, $"{preset.Name}.curvepreset");
+        var lines = preset.Points.Select(p => p.ToKeyString("key")).ToArray();
+        await File.WriteAllLinesAsync(filename, lines);
+    }
+
+    /// <summary>Loads a preset from file asynchronously.</summary>
+    public static async Task<Preset?> LoadPresetAsync(string presetName)
+    {
+        var filename = Path.Combine(PresetFolder, $"{presetName}.curvepreset");
+        if (!File.Exists(filename)) return null;
+
+        var lines = await File.ReadAllLinesAsync(filename);
+        return ParseFromLines(Path.GetFileNameWithoutExtension(filename), lines);
+    }
+
+    /// <summary>Gets all available preset names asynchronously.</summary>
+    public static async Task<string[]> GetAvailablePresetsAsync()
+    {
+        EnsureFolderExists();
+        return await Task.Run(() =>
         {
-            if (!Directory.Exists(PresetFolder))
-                Directory.CreateDirectory(PresetFolder);
-        }
-
-        /// <summary>
-        /// Saves a preset to file.
-        /// </summary>
-        public static void SavePreset(Preset preset)
-        {
-            EnsureFolderExists();
-            var filename = Path.Combine(PresetFolder, $"{preset.Name}.curvepreset");
-            var lines = preset.Points.Select(p => p.ToKeyString("key")).ToArray();
-            File.WriteAllLines(filename, lines);
-        }
-
-        /// <summary>
-        /// Loads a preset from file.
-        /// </summary>
-        public static Preset LoadPreset(string presetName)
-        {
-            var filename = Path.Combine(PresetFolder, $"{presetName}.curvepreset");
-            if (!File.Exists(filename)) return null;
-
-            var lines = File.ReadAllLines(filename);
-            var preset = ParseFromLines(Path.GetFileNameWithoutExtension(filename), lines);
-            return preset;
-        }
-
-        /// <summary>
-        /// Gets all available preset names.
-        /// </summary>
-        public static string[] GetAvailablePresets()
-        {
-            EnsureFolderExists();
             var files = Directory.GetFiles(PresetFolder, "*.curvepreset");
-            return files.Select(f => Path.GetFileNameWithoutExtension(f)).ToArray();
-        }
+            return files.Select(Path.GetFileNameWithoutExtension)
+                        .Where(name => name != null)
+                        .Select(name => name!)
+                        .ToArray();
+        });
+    }
 
-        /// <summary>
-        /// Deletes a preset.
-        /// </summary>
-        public static void DeletePreset(string presetName)
+    public static void DeletePreset(string presetName) // Sync is fine for delete
+    {
+        var filename = Path.Combine(PresetFolder, $"{presetName}.curvepreset");
+        if (File.Exists(filename))
+            File.Delete(filename);
+    }
+
+    private static Preset ParseFromLines(string name, string[] lines)
+    {
+        var preset = new Preset
         {
-            var filename = Path.Combine(PresetFolder, $"{presetName}.curvepreset");
-            if (File.Exists(filename))
-                File.Delete(filename);
-        }
+            Name = name,
+            Points = []
+        };
 
-        /// <summary>
-        /// Parses a preset from key string lines.
-        /// </summary>
-        private static Preset ParseFromLines(string name, string[] lines)
+        foreach (var line in lines)
         {
-            var preset = new Preset { Name = name };
-
-            foreach (var line in lines)
+            if (line.StartsWith("key"))
             {
-                if (line.StartsWith("key"))
-                {
-                    var result = FloatString4.TryParseKeyString(line);
-                    if (result.Success)
-                        preset.Points.Add(result.Point);
-                }
+                var result = CurveParser.TryParseKeyString(line);
+                if (result.Success)
+                    preset.Points.Add(result.Point ?? throw new InvalidOperationException("Failed to parse key"));
             }
-
-            return preset;
         }
+
+        return preset;
     }
 }

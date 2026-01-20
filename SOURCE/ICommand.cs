@@ -11,18 +11,16 @@
  * See https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html  or the LICENSE file for full terms.
  */
 
-using System;
-using System.Windows.Forms;
+#nullable enable
 
 namespace KSPCurveBuilder;
 
-internal static class Program
+/// <summary>
+/// Command pattern interface for undoable operations.
+/// </summary>
+public interface ICommand
 {
-    /// <summary>The main entry point for the application.</summary>
-    [STAThread]
-    static void Main()
-    {
-        ApplicationConfiguration.Initialize();
-        Application.Run(new KSPCurveBuilder());
-    }
+    string Name { get; }
+    void Execute();
+    void Unexecute();
 }
