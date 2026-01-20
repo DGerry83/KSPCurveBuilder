@@ -5,13 +5,16 @@ Based on Amazing KSPCurveBuilder by sarbian (c)2015 (https://github.com/sarbian)
 
 ## Features
 
-*   **Visual Curve Editing**: Interactive graph with pan and zoom controls.
-*   **Direct Point Manipulation**: Edit curve keys (Time, Value, In/Out Tangents) by typing directly in the cells or by click-dragging on the cells.
+*   **Visual Curve Editing**: Interactive graph with pan and zoom controls, now with cursor-aware zoom centering and hover tooltips.
+*   **Direct Point Manipulation**: Edit curve keys by typing in cells, click-dragging on cells (with Shift/Ctrl for +/- speed control), or dragging points directly on the graph. Right-click graph to add new points.
 *   **Preset Management**:
     *   Built-in curve presets (Default, Linear, Ease In, Ease Out, Smooth Start).
-    *   Save, load, rename, and delete custom user presets.
+    *   Save, load, rename, and delete custom user presets with async operations and auto-reselection after deletion.
 *   **Data Portability**: Copy and paste curve data as plain-text key strings for easy sharing.
 *   **Tangent Smoothing**: One-click button to automatically smooth curve tangents.
+*   **Auto-Sort**: Automatic sorting by time when enabled (default: on).
+*   **Undo/Redo**: Full history tracking for all editing operations.
+*   **Enhanced Error Handling**: User-friendly message boxes for validation failures.
 
 ## Prerequisites
 
