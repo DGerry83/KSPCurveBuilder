@@ -1,5 +1,6 @@
-V 1.0.0
-Initial Release
+# V 1.0.0
+## Initial Release
+
 **Main Interface**
 - Fixed-size dialog window with non-resizable layout
 - Black PictureBox displaying real-time curve visualization
@@ -35,7 +36,9 @@ Initial Release
 - Add Node: appends new point at last time +10 with zero tangents
 - Reset Zoom: returns to 1.0x zoom and centered view
 
-V 2.0.0
+# V 2.0.0
+## Feature Upgrade and Refactoring
+
 **New Interactive Features**
 - **Direct point manipulation**: Click and drag any curve point directly on the graph visualization
 - **Right-click to add points**: Right-click anywhere on the graph to insert a new point at that location
