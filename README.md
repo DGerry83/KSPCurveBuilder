@@ -9,7 +9,7 @@ Based on Amazing KSPCurveBuilder by sarbian (c)2015 (https://github.com/sarbian)
 *   **Direct Point Manipulation**: Edit curve keys by typing in cells, click-dragging on cells (with Shift/Ctrl for +/- speed control), or dragging points directly on the graph. Right-click graph to add new points.
 *   **Preset Management**:
     *   Built-in curve presets (Default, Linear, Ease In, Ease Out, Smooth Start).
-    *   Save, load, rename, and delete custom user presets with async operations and auto-reselection after deletion.
+    *   Save, load, rename, and delete custom user presets.
 *   **Data Portability**: Copy and paste curve data as plain-text key strings for easy sharing.
 *   **Tangent Smoothing**: One-click button to automatically smooth curve tangents.
 *   **Auto-Sort**: Automatic sorting by time when enabled (default: on).
