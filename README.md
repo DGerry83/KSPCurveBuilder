@@ -20,7 +20,6 @@ Based on Amazing KSPCurveBuilder by sarbian (c)2015 (https://github.com/sarbian)
 
 *   [.NET 10 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) or later.
 *   Windows 10/11.
-*   (For Development) Visual Studio 2022 (v17.12+) or Visual Studio 2026 with the ".NET desktop development" workload.
 
 ## Getting Started
 
