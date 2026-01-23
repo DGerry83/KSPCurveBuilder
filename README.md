@@ -1,7 +1,7 @@
 # KSPCurveBuilder
 A standalone Windows desktop application for editing and visualizing float curves, with support for saving and loading custom presets.
 
-Based on Amazing KSPCurveBuilder by sarbian (c)2015 (https://github.com/sarbian)
+Based on Amazing Curve Editor by sarbian (c)2015 (https://github.com/sarbian)
 
 ## Features
 
@@ -50,7 +50,7 @@ Based on Amazing KSPCurveBuilder by sarbian (c)2015 (https://github.com/sarbian)
 This project is released under the **GNU General Public License, version 2 (GPL-2.0)**.
 
 **Copyright Notice:**
-*   Original concept and foundational code for a float KSPCurveBuilder © 2015 sarbian (https://github.com/sarbian).
+*   Original concept and foundational code for KSPCurveBuilder based on Amazing Curve Editor © 2015 sarbian (https://github.com/sarbian).
 *   Modifications, reimplementation, and new code © 2026 DGerry83(https://github.com/DGerry83).
 
 This standalone application is a significant reimplementation and extension of those original ideas.
