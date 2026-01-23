@@ -54,10 +54,10 @@ public sealed record FloatString4 : IComparable<FloatString4>, IComparable
     { }
 
     // Computed string properties
-    public string TimeString => FormatNumber(Time, Formatting.TIME_DECIMAL_PLACES);
-    public string ValueString => FormatNumber(Value, Formatting.VALUE_DECIMAL_PLACES);
-    public string InTangentString => FormatNumber(InTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
-    public string OutTangentString => FormatNumber(OutTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES);
+    public string TimeString => FormatNumber(Time, Formatting.TIME_DISPLAY);
+    public string ValueString => FormatNumber(Value, Formatting.VALUE_DISPLAY);
+    public string InTangentString => FormatNumber(InTangent, Formatting.TANGENT_DISPLAY);
+    public string OutTangentString => FormatNumber(OutTangent, Formatting.TANGENT_DISPLAY);
 
 // Single implementation - no explicit interface duplication
 public int CompareTo(FloatString4? other)
@@ -86,10 +86,10 @@ public int CompareTo(object? obj)
 
     public string ToKeyString(string keyName = "key") => string.Format(CultureInfo.InvariantCulture, "{0} = {1} {2} {3} {4}",
         keyName ?? "key",
-        FormatNumber(Time, Formatting.TIME_DECIMAL_PLACES),
-        FormatNumber(Value, Formatting.VALUE_DECIMAL_PLACES),
-        FormatNumber(InTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES),
-        FormatNumber(OutTangent, Formatting.TANGENT_SIGNIFICANT_FIGURES));
+        FormatNumber(Time, Formatting.TIME_SERIALIZATION),
+        FormatNumber(Value, Formatting.VALUE_SERIALIZATION),
+        FormatNumber(InTangent, Formatting.TANGENT_SERIALIZATION),
+        FormatNumber(OutTangent, Formatting.TANGENT_SERIALIZATION));
 
     public override string ToString() =>
         string.Format("FloatString4: Time={0}, Value={1}, InTan={2}, OutTan={3}", Time, Value, InTangent, OutTangent);

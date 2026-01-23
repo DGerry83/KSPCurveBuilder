@@ -26,6 +26,7 @@ public sealed class DataGridController
     private readonly DataGridView _grid;
     private readonly CurveEditorService _editorService;
     private readonly GridDragHandler _dragHandler;
+    private readonly PictureBox _pictureBox;
 
     private bool _ignoreChanges = false;
 
@@ -33,11 +34,13 @@ public sealed class DataGridController
     public event EventHandler<PointRemovedEventArgs>? PointRemoved;
     public event EventHandler<GridCellEditedEventArgs>? GridCellEdited;
 
+
     public DataGridController(DataGridView grid, CurveEditorService editorService, PictureBox pictureBox)
     {
         _grid = grid ?? throw new ArgumentNullException(nameof(grid));
         _editorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
-        _ = pictureBox ?? throw new ArgumentNullException(nameof(pictureBox));
+        _pictureBox = pictureBox ?? throw new ArgumentNullException(nameof(pictureBox));
+
 
         ConfigureGridBehavior();
 
@@ -45,7 +48,6 @@ public sealed class DataGridController
 
         WireUpEvents();
         CreateGridColumns();
-
         BindDataSource();
     }
 
@@ -58,9 +60,19 @@ public sealed class DataGridController
         _grid.MouseDown += _dragHandler.OnMouseDown;
         _grid.MouseMove += _dragHandler.OnMouseMove;
         _grid.MouseUp += _dragHandler.OnMouseUp;
-        _grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
+        _grid.Leave += OnGridLeave;
+        _pictureBox.MouseDown += OnPictureBoxMouseDown;
+        _grid.MouseClick += OnGridBackgroundClick;
 
+        _grid.DataError += (s, e) => { e.ThrowException = false; e.Cancel = false; };
+        _grid.CellEndEdit += OnCellEndEdit;
         _dragHandler.DragCompleted += OnDragCompleted;
+
+        var form = _grid.FindForm();
+        if (form != null)
+        {
+            form.MouseDown += OnFormMouseDown;
+        }
     }
 
     private void ConfigureGridBehavior()
@@ -115,13 +127,78 @@ public sealed class DataGridController
         CellValueChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private void OnCellEndEdit(object? sender, DataGridViewCellEventArgs e)
+    {
+        // Defer to avoid reentrancy with DataGridView's internal cell processing
+        _grid.BeginInvoke(new Action(() =>
+        {
+            // Only clear if NOT currently editing (Enter key pressed)
+            // If currently editing (mouse click), leave it alone
+            if (!_grid.IsDisposed && !_grid.IsCurrentCellInEditMode)
+            {
+                _grid.CurrentCell = null;
+            }
+        }));
+    }
+    private void OnGridLeave(object? sender, EventArgs e)
+    {
+        // Commit edit when focus leaves the grid (e.g., clicking buttons, tabbing out)
+        if (_grid.IsCurrentCellInEditMode)
+        {
+            _grid.EndEdit();
+            _grid.CurrentCell = null;
+        }
+    }
+    private void OnFormMouseDown(object? sender, MouseEventArgs e)
+    {
+        // End edit when clicking on empty form background
+        if (_grid.IsCurrentCellInEditMode)
+        {
+            _grid.EndEdit();
+            _grid.CurrentCell = null;
+        }
+    }
+
+    private void OnPictureBoxMouseDown(object? sender, MouseEventArgs e)
+    {
+        // Commit edit when clicking on the canvas
+        if (_grid.IsCurrentCellInEditMode)
+        {
+            _grid.EndEdit();
+            _grid.CurrentCell = null;
+        }
+    }
+    private void OnGridBackgroundClick(object? sender, MouseEventArgs e)
+    {
+        var hit = _grid.HitTest(e.X, e.Y);
+        if (hit.Type == DataGridViewHitTestType.None)
+        {
+            // Clicked on empty background area
+            if (_grid.IsCurrentCellInEditMode)
+            {
+                _grid.EndEdit();
+            }
+            _grid.CurrentCell = null;
+        }
+    }
+
     private void OnCellClick(object? sender, DataGridViewCellEventArgs e)
     {
-        if (e == null || e.RowIndex < 0 || e.ColumnIndex != 4) return; // RemoveButton column
+        if (e == null || e.RowIndex < 0) return;
 
-        if (MessageBox.Show("Delete this point?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+        // Handle Remove button column (column 4)
+        if (e.ColumnIndex == 4)
         {
-            PointRemoved?.Invoke(this, new PointRemovedEventArgs(e.RowIndex));
+            if (MessageBox.Show("Delete this point?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                PointRemoved?.Invoke(this, new PointRemovedEventArgs(e.RowIndex));
+            }
+            return;
+        }
+
+        if (e.ColumnIndex >= 0 && e.ColumnIndex <= 3 && !_grid.IsCurrentCellInEditMode)
+        {
+            _grid.BeginEdit(false);
         }
     }
 
@@ -179,9 +256,9 @@ public sealed class DataGridController
 
         string format = e.ColumnIndex switch
         {
-            0 => Formatting.TIME_DECIMAL_PLACES,
-            1 => Formatting.VALUE_DECIMAL_PLACES,
-            2 or 3 => Formatting.TANGENT_SIGNIFICANT_FIGURES,
+            0 => Formatting.TIME_DISPLAY,
+            1 => Formatting.VALUE_DISPLAY,
+            2 or 3 => Formatting.TANGENT_DISPLAY,
             _ => "G"
         };
 

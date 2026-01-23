@@ -112,7 +112,7 @@ public class CurveRenderer : IDisposable
             if (IsCoordinateValid(x))
             {
                 g.DrawLine(_gridPen, x, 0, x, _height);
-                g.DrawString(time.ToString("F1", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, x, _height - Constants.Visual.GRID_LABEL_OFFSET_Y);
+                g.DrawString(time.ToString(Formatting.TIME_DISPLAY, CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, x, _height - Constants.Visual.GRID_LABEL_OFFSET_Y);
             }
         }
 
@@ -122,7 +122,7 @@ public class CurveRenderer : IDisposable
             if (IsCoordinateValid(y))
             {
                 g.DrawLine(_gridPen, 0, y, _width, y);
-                g.DrawString(value.ToString("F2", CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, Constants.Visual.GRID_LABEL_VALUE_OFFSET_X, y);
+                g.DrawString(value.ToString(Formatting.VALUE_DISPLAY, CultureInfo.InvariantCulture), _gridFont, Brushes.Gray, Constants.Visual.GRID_LABEL_VALUE_OFFSET_X, y);
             }
         }
     }
@@ -227,8 +227,8 @@ public class CurveRenderer : IDisposable
         y = Math.Max(Constants.Visual.LABEL_PADDING, Math.Min(_height - 60, y));
 
         string label = $"Point {_hoveredPointIndex + 1}\n" +
-                       $"Time: {FloatString4.FormatNumber(point.Time, "F2")}\n" +
-                       $"Value: {FloatString4.FormatNumber(point.Value, "F3")}\n";
+                       $"Time: {FloatString4.FormatNumber(point.Time, Formatting.TIME_DISPLAY)}\n" +
+                       $"Value: {FloatString4.FormatNumber(point.Value, Formatting.VALUE_DISPLAY)}\n";
 
         SizeF textSize = g.MeasureString(label, _gridFont);
         float boxWidth = textSize.Width + 10;

@@ -57,11 +57,11 @@ jobs:
 
       - name: Archive publish output
         shell: pwsh
-        
         run: |
-          if (Test-Path release.zip) { Remove-Item release.zip -Force }
+          $zipName = "${{ github.ref_name }}.zip"
+          if (Test-Path $zipName) { Remove-Item $zipName -Force }
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          [IO.Compression.ZipFile]::CreateFromDirectory('publish', 'release.zip')
+          [IO.Compression.ZipFile]::CreateFromDirectory('publish', $zipName)
 
       - name: Create GitHub Release
         id: create_release
@@ -73,6 +73,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release.zip
+            ${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

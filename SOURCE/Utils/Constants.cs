@@ -29,7 +29,7 @@ public static class Constants
     public const int HOVER_LABEL_OFFSET_Y = -20;
     public const int DRAG_EDGE_THRESHOLD = 5;
     public const int DRAG_WARP_DISTANCE = 50;
-    public const int DRAG_START_THRESHOLD = 3; // pixels
+    public const int DRAG_START_THRESHOLD = 5; // pixels
 
     public static class Visual
     {
@@ -73,9 +73,20 @@ public static class Constants
 
 public static class Formatting
 {
-    public const string TIME_DECIMAL_PLACES = "F1";
-    public const string VALUE_DECIMAL_PLACES = "F1";
-    public const string TANGENT_SIGNIFICANT_FIGURES = "G4";
+    // Display formats: up to 4 significant figures, may use scientific notation for extreme values
+    public const string TIME_DISPLAY = "G4";
+    public const string VALUE_DISPLAY = "G4";
+    public const string TANGENT_DISPLAY = "G4";
+
+    // Serialization formats: full precision fixed-point, never scientific notation
+    public const string TIME_SERIALIZATION = "0.#########";
+    public const string VALUE_SERIALIZATION = "0.#########";
+    public const string TANGENT_SERIALIZATION = "0.#########";
+
+    // Legacy constants for backward compatibility (deprecated)
+    //public const string TIME_DECIMAL_PLACES = "G4";
+    //public const string VALUE_DECIMAL_PLACES = "G4";
+    //public const string TANGENT_SIGNIFICANT_FIGURES = "G4";
 }
 
 public enum DataGridColumn

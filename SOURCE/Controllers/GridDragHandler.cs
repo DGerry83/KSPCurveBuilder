@@ -35,7 +35,6 @@ public sealed class GridDragHandler
     private FloatString4? _originalPoint;
     private FloatString4? _currentDragPoint;
     private float _lastDragValue;
-    private const int DRAG_THRESHOLD = 2;
 
     public bool IsDragging => _isDragging;
 
@@ -51,6 +50,11 @@ public sealed class GridDragHandler
     public void OnMouseDown(object? sender, MouseEventArgs e)
     {
         if (e.Button != MouseButtons.Left) return;
+
+        if (_grid.IsCurrentCellInEditMode)
+        {
+            _grid.EndEdit(DataGridViewDataErrorContexts.Commit);
+        }
 
         var hit = _grid.HitTest(e.X, e.Y);
         if (hit.Type == DataGridViewHitTestType.Cell &&
@@ -75,7 +79,7 @@ public sealed class GridDragHandler
         if (!_isDragging)
         {
             float distance = Math.Abs(e.X - _dragStartPos.X) + Math.Abs(e.Y - _dragStartPos.Y);
-            if (distance < DRAG_THRESHOLD) return;
+            if (distance < Constants.DRAG_START_THRESHOLD) return;
 
             _isDragging = true;
             _grid.Capture = true;
@@ -108,13 +112,27 @@ public sealed class GridDragHandler
     {
         if (!_isMouseDown) return;
 
-        if (_isDragging && _originalPoint != null && _currentDragPoint != null)
+        bool wasDragging = _isDragging;
+
+        if (wasDragging && _originalPoint != null && _currentDragPoint != null)
         {
             DragCompleted?.Invoke(this, new PointDraggedEventArgs(
                 _dragRowIndex, _originalPoint, _currentDragPoint
             ));
         }
+
         Cleanup();
+
+        if (wasDragging)
+        {
+            _grid.BeginInvoke(new Action(() =>
+            {
+                if (!_grid.IsDisposed)
+                {
+                    _grid.CurrentCell = null;
+                }
+            }));
+        }
     }
 
     private void UpdatePointTemporarily(int index, FloatString4 point)
