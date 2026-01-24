@@ -58,8 +58,8 @@
 - **Sort by default**: Sort checkbox is enabled by default
 - **Error handling**: User-friendly message boxes instead of silent failures
 
-# V 2.0.1
-## Small Bugfix
+## V 2.0.1
+### Small Bugfix
 * Scientific notation no longer appears in textbox or copied output
 * Fixed rounding problems, ensure textbox serialization is handled separately from datagrid - Time and Value now show more digits on the grid, textbox outputs true value
 * Focus no longer gets stuck on the first cell in a row in some situations.
