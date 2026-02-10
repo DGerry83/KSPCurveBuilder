@@ -81,7 +81,7 @@ public static class Formatting
     // Serialization formats: full precision fixed-point, never scientific notation
     public const string TIME_SERIALIZATION = "0.#########";
     public const string VALUE_SERIALIZATION = "0.#########";
-    public const string TANGENT_SERIALIZATION = "0.#########";
+    public const string TANGENT_SERIALIZATION = "0.####################";
 
     // Legacy constants for backward compatibility (deprecated)
     //public const string TIME_DECIMAL_PLACES = "G4";

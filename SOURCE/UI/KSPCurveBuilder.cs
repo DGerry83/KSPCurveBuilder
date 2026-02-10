@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static KSPCurveBuilder.DataGridController;
@@ -236,10 +237,25 @@ public partial class KSPCurveBuilder : Form
     private void CopyToClipboard()
     {
         var text = curveText?.Text ?? "";
-        if (!string.IsNullOrEmpty(text))
+        if (string.IsNullOrEmpty(text)) return;
+
+        try
         {
-            Clipboard.SetText(text);
-            MessageBox.Show("Curve data copied to clipboard!", "Copy", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // Use SetDataObject with explicit retry parameters for better resilience
+            Clipboard.SetDataObject(text, copy: true, retryTimes: 10, retryDelay: 100);
+
+            MessageBox.Show("Curve data copied to clipboard!", "Copy",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (ExternalException)
+        {
+            // Clipboard is locked by another process (0x800401D0)
+            MessageBox.Show(
+                "Unable to copy to clipboard. The clipboard is being used by another application.\n\n" +
+                "Please try again in a moment.",
+                "Clipboard Busy",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
         }
     }
 
@@ -471,14 +487,23 @@ public partial class KSPCurveBuilder : Form
     }
     private List<FloatString4> ParseClipboard()
     {
-        string text = Clipboard.GetText();
-        if (string.IsNullOrWhiteSpace(text)) return [];
+        try
+        {
+            string text = Clipboard.GetText();
+            if (string.IsNullOrWhiteSpace(text)) return [];
 
-        return text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(line => CurveParser.TryParseKeyString(line.Trim()))
-            .Where(r => r.Success && r.Point != null)
-            .Select(r => r.Point!)
-            .ToList();
+            return text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => CurveParser.TryParseKeyString(line.Trim()))
+                .Where(r => r.Success && r.Point != null)
+                .Select(r => r.Point!)
+                .ToList();
+        }
+        catch (ExternalException)
+        {
+            MessageBox.Show("Clipboard is currently busy. Please try again.",
+                "Clipboard Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return [];
+        }
     }
 
     private void UpdateUndoButtons()

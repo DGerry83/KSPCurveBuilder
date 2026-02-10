@@ -83,13 +83,34 @@ public int CompareTo(object? obj)
         string result = number.ToString(format, CultureInfo.InvariantCulture);
         return format.StartsWith("F") && result.EndsWith(".0") ? result.Substring(0, result.Length - 2) : result;
     }
+    public static string FormatFloat(float value)
+    {
+        if (value == 0) return "0";
+        if (float.IsNaN(value)) return "NaN";
+        if (float.IsInfinity(value)) return value > 0 ? "Infinity" : "-Infinity";
+
+        int magnitude = (int)Math.Floor(Math.Log10(Math.Abs(value)));
+        int decimalPlaces = Math.Max(0, 6 - magnitude);
+        decimalPlaces = Math.Min(decimalPlaces, 20);
+
+        string format = "0." + new string('#', decimalPlaces);
+        string result = value.ToString(format, CultureInfo.InvariantCulture);
+
+        // Only trim after decimal point, never touch integer part
+        if (result.Contains('.'))
+        {
+            result = result.TrimEnd('0').TrimEnd('.');
+        }
+
+        return result;
+    }
 
     public string ToKeyString(string keyName = "key") => string.Format(CultureInfo.InvariantCulture, "{0} = {1} {2} {3} {4}",
         keyName ?? "key",
-        FormatNumber(Time, Formatting.TIME_SERIALIZATION),
-        FormatNumber(Value, Formatting.VALUE_SERIALIZATION),
-        FormatNumber(InTangent, Formatting.TANGENT_SERIALIZATION),
-        FormatNumber(OutTangent, Formatting.TANGENT_SERIALIZATION));
+        FormatFloat(Time),
+        FormatFloat(Value),
+        FormatFloat(InTangent),
+        FormatFloat(OutTangent));
 
     public override string ToString() =>
         string.Format("FloatString4: Time={0}, Value={1}, InTan={2}, OutTan={3}", Time, Value, InTangent, OutTangent);
